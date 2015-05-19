@@ -8,9 +8,6 @@
  */
 defined('_JEXEC') or die;
 jimport('joomla.application.component.controllerform');
-require_once JPATH_SITE . '/components/com_osian/common.php';
-require_once JPATH_SITE . '/components/com_osian/defines.osian.php';
-require_once JPATH_SITE . '/components/com_osian/models/bulkedit.php';
 require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
 
 /**
@@ -24,10 +21,6 @@ class OsianControllerimport extends JController
 {
 	/**
 	 * Function constructor.
-	 * 
-	 * @param   int  &$subject  subject
-	 * 
-	 * @param   int  $config    config
 	 * 
 	 * @since   1.0.0
 	 */
@@ -58,9 +51,12 @@ class OsianControllerimport extends JController
 	{
 		$postData = $this->jinput->post;
 		$adapter = $postData->get('adapter', '1', 'STRING');
+		unset($batch_id);
 		$batch_id = $this->model->storeBatch($postData, $adapter);
 		$columns = $this->model->getColumns($postData->get('category', '1', 'STRING'), $adapter);
+		$this->session->set('columns', '');
 		$this->session->set('columns', $columns);
+		$this->session->set('batch_id', '');
 		$this->session->set('batch_id', $batch_id);
 		$this->app->redirect('index.php?option=com_osian&view=import&layout=pastedata&adapter=Osian&sel=bulkimport');
 	}
@@ -101,30 +97,39 @@ class OsianControllerimport extends JController
 		echo json_encode($returnArray);
 		jexit();
 	}
-	
+
+	/**
+	 * Function getPreviewData used to get records to show preview before import
+	 *
+	 * @return  nothing
+	 *
+	 * @since   1.0.0
+	 */
 	public function getPreviewData()
 	{
-		//echo "die";die;
 		$postData = $this->jinput->post;
 		$batch_id = $this->session->get('batch_id');
 		$csvdata = json_decode($postData->get('csvdata', '1', 'STRING'));
 		$start_val = $this->jinput->get('start_val');
-		//echo $start_val;die('$start_limit');
 		$end_val = $this->jinput->get('end_val');
 		$returnArray = $this->model->showPreviewData($start_val, $end_val, $batch_id);
 		echo json_encode($returnArray);
 		jexit();
 	}
-	
+
+	/**
+	 * Function importData used to import data to database.
+	 *
+	 * @return  nothing
+	 *
+	 * @since   1.0.0
+	 */
 	public function importData()
 	{
-		//echo "die";die;
 		$postData = $this->jinput->post;
 		$batch_id = $this->session->get('batch_id');
-		//$csvdata = json_decode($postData->get('csvdata', '1', 'STRING'));
 		$start_val = $this->jinput->get('start_limit');
-		//echo $start_val;die('$start_limit');
-		$end_val = $this->jinput->get('start_limit');
+		$end_val = $this->jinput->get('end_limit');
 		$returnArray = $this->model->importData($start_val, $end_val, $batch_id);
 		echo json_encode($returnArray);
 		jexit();

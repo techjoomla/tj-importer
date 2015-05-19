@@ -36,6 +36,16 @@ class OsianViewimport extends JView
 		$this->assignRef('id', $user->id);
 		$invalid_data  = $model->getInvalidData();
 		$this->assignRef('invalid_data', $invalid_data);
+		$oinvalid_data  = $model->getoInvalidData();
+		$this->assignRef('oinvalid_data', $oinvalid_data);
+		$previewlink  = $model->getPreviewLink();
+		$this->assignRef('previewlink', $previewlink);
+		$imported  = $model->getImportedCount();
+		$this->assignRef('imported', $imported);
+		$not_imported  = $model->getNImportedCount();
+		$this->assignRef('not_imported', $not_imported);
+		$total  = $model->getTotal();
+		$this->assignRef('total', $total);
 		/*$clas_all_data  = $model->getAllClassList();
 		$this->assignRef('cls_all_data', $clas_all_data);
 		$user = &JFactory::getUser();

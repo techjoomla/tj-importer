@@ -9,9 +9,6 @@
 defined('_JEXEC') or die('Restricted access');
 jimport('joomla.application.component.model');
 jimport('joomla.database.database.mysqli');
-require_once JPATH_SITE . '/components/com_osian/common.php';
-require_once JPATH_SITE . '/components/com_osian/defines.osian.php';
-require_once JPATH_SITE . '/components/com_osian/classes/build_hierarchy.php';
 require_once JPATH_SITE . '/components/com_osian/adapters/osian.php';
 
 /**
@@ -25,10 +22,6 @@ class OsianModelimport extends JModel
 {
 	/**
 	 * Function constructor.
-	 * 
-	 * @param   int  &$subject  subject
-	 * 
-	 * @param   int  $config    config
 	 * 
 	 * @since   1.0.0
 	 */
@@ -57,17 +50,9 @@ class OsianModelimport extends JModel
 	 */
 	public function getCategories()
 	{
-		$obj				 = new Build_Hierarchy;
-		$all_classifications = $obj->BuildTree();
-		$class_drop_down	 = array();
-
-		foreach ($all_classifications as $key => $value)
-		{
-			if ($value['parent'] === 0 && $value['name'] != '')
-			{
-				$class_drop_down[$value['config'] . "/" . $value['id']] = $value['name'];
-			}
-		}
+		$adapter = $this->jinput->get('adapter');
+		$classname = $adapter . "Adapter";
+		$class_drop_down = $classname::getCategories();
 
 		return $class_drop_down;
 	}
@@ -85,8 +70,6 @@ class OsianModelimport extends JModel
 	 */
 	public function storeBatch($postdata, $adapter)
 	{
-		//$classname = $adapter . "Adapter";
-		//$batch_id = $classname::storeBatchDetails($postdata);
 		$logged_user = JFactory::getUser();
 		$date = new DateTime;
 
@@ -102,6 +85,20 @@ class OsianModelimport extends JModel
 
 		$this->dbo->insertObject('#__batch_details', $flag1, 'id');
 		$batchid = $this->dbo->insertid();
+
+	/* Following code is done purely for Osian */
+		$data = new stdClass;
+		$data->id = '';
+		$data->batch_no = $batchid;
+		$data->created_date = date_format($date, 'Y-m-d H:i:s');
+		$data->status = 'New';
+		$data->filename = $postdata->get('filename', '1', 'STRING');
+		$data->import_user = $logged_user->id;
+		$data->publish_user = 0;
+
+		$this->dbo->insertObject('#__batch_info', $data, id);
+		unset($data);
+		/* END_-Following code is done purely for Osian */
 		return $batchid;
 	}
 
@@ -141,9 +138,7 @@ class OsianModelimport extends JModel
 	 */
 	public function storeDatatoTemp($csvData, $start_limit, $end_limit, $batch_id)
 	{
-
 		$type = $this->jinput->get('type');
-		//$adapter = 'Osian';
 		$adapter = $this->jinput->get('adapter');
 		$batch = 2;
 
@@ -169,16 +164,18 @@ class OsianModelimport extends JModel
 		foreach ($data as $fieldvalues)
 		{
 			$classname = $adapter . "Adapter";
+
 			// Make validate = 1 for columns row and spare row.
-			if($fieldvalues->recordid == '' || $fieldvalues->recordid == 'recordid')
+			if ($fieldvalues->name == '' || $fieldvalues->recordid == 'recordid')
 			{
-				$valdiated = 1;
+				$imported = 1;
 			}
 			else
-			{ 
-				$valdiated = 0;
+			{
+				$imported = 0;
 			}
-				$columns = $this->storeinTemp($fieldvalues, $batch_id, $validated);
+
+				$columns = $this->storeinTemp($fieldvalues, $batch_id, $imported);
 		}
 
 		$nextlstart = $end_limit;
@@ -199,21 +196,22 @@ class OsianModelimport extends JModel
 
 		return $limit;
 	}
-	
+
 	/**
 	 * Function validate used to validate the pasted data..
 	 *
 	 * @param   array  $data      data pasted into csv row wise.
 	 * 
 	 * @param   int    $batch_id  batch_id of the procesing batch
+	 * 
+	 * @param   int    $imported  imported 1/0(in case of columns row and spare row imported we will keep it as 1)
 	 *
 	 * @return  return nothing
 	 *
 	 * @since   1.0.0
 	 */
-		public function storeinTemp($data, $batch_id, $validated = 0)
+	public function storeinTemp($data, $batch_id, $imported = 0)
 	{
-		//print_r($data);die('data');
 		$type = $this->jinput->get('type');
 		$query_field = $this->dbo->getQuery(true);
 		$query_field	->select('*')
@@ -221,35 +219,34 @@ class OsianModelimport extends JModel
 						->where('id =' . $batch_id);
 		$this->dbo->setQuery($query_field);
 		$batch_info  = $this->dbo->loadObject();
+
 		if ($type == 'add')
 		{
 			$flag1 = new stdClass;
 			$flag1->id = '';
 			$flag1->data = json_encode($data);
 			$flag1->title = $batch_info->batch_no;
-			$flag1->validated = $validated;
-			$flag1->imported = 0;
+			$flag1->validated = 0;
+			$flag1->imported = $imported;
 			$flag1->batch_id = $batch_id;
 			$flag1->content_id = '';
 			$this->dbo->insertObject('#__import_temp', $flag1, 'id');
 		}
-		else if ($type == 'edit')
+		elseif ($type == 'edit')
 		{
 			// Update records
-			//print_r($data);die('mydata');
 			if ($data->recordid != 'recordid')
 			{
 				$recorid = $data->recordid;
 				$data_to_update = json_encode($data);
 
-				$object = new stdClass();
+				$object = new stdClass;
 				$object->id = $recorid;
 				$object->data = $data_to_update;
-				 
+
 				// Update their details in the users table using id as the primary key.
 				$result = $this->dbo->updateObject('#__import_temp', $object, 'id');
 			}
-			
 		}
 
 		return;
@@ -270,9 +267,9 @@ class OsianModelimport extends JModel
 	 */
 	public function validateValues($batch_id, $start_limit, $end_limit)
 	{
-		//$adapter = 'Osian';
 		$adapter = $this->jinput->get('adapter');
-		$batch =2;
+		$batch = 2;
+
 		if ($start_limit == 0)
 		{
 			$i = 0;
@@ -284,15 +281,16 @@ class OsianModelimport extends JModel
 							->where('batch_id =' . $batch_id . ' AND validated = 0');
 			$this->dbo->setQuery($query_field);
 			$data_to_validate  = $this->dbo->loadObjectList();
+			$this->session->set('datatoValidate', '');
 			$this->session->set('datatoValidate', $data_to_validate);
-			
 		}
 		else
 		{
 			$data_to_validate = $this->session->get('datatoValidate');
-			
 		}
+
 		$count = count($data_to_validate);
+
 		if ($count < $batch)
 		{
 			$data_valid  = $data_to_validate;
@@ -300,7 +298,7 @@ class OsianModelimport extends JModel
 		else
 		{
 			// Below is done because our first row is column names and we need to skip it.
-			if($start_limit == 0)
+			if ($start_limit == 0)
 			{
 				$offset_start = 1;
 			}
@@ -312,32 +310,29 @@ class OsianModelimport extends JModel
 			$data_valid = array_slice($data_to_validate, $offset_start, $batch);
 			$dataa[] = $data;
 		}
-		//print_r($data_valid);die('valid');
+
 		foreach ($data_valid as $data)
 		{
 			$classname = $adapter . "Adapter";
 			$invalid_array = $classname::validate(json_decode($data->data), $data->id);
-			if(!empty($invalid_array))
+
+			if (!empty($invalid_array))
 			{
-				/*$query = "UPDATE #__import_temp SET validated = 0 WHERE id = " .$data->id;
-				$this->dbo->setQuery($query);
-				$this->dbo->query();*/
-				
-				$object = new stdClass();
+				$object = new stdClass;
 				$object->id = $data->id;
 				$object->invalid_columns = json_encode($invalid_array);
 				$object->validated = 0;
-				 
+
 				// Update their details in the users table using id as the primary key.
 				$result = $this->dbo->updateObject('#__import_temp', $object, 'id');
 			}
 			else
 			{
-				$object = new stdClass();
+				$object = new stdClass;
 				$object->id = $data->id;
-				//$object->invalid_columns = json_encode($invalid_array);
+				$object->invalid_columns = '';
 				$object->validated = 1;
-				 
+
 				// Update their details in the users table using id as the primary key.
 				$result = $this->dbo->updateObject('#__import_temp', $object, 'id');
 			}
@@ -354,19 +349,24 @@ class OsianModelimport extends JModel
 			$limit['end'] = $nextlend;
 			$limit['count'] = $count;
 			$limit['batch'] = $batch;
-			//$limit['vdata'] = $data_to_validate;
 		}
 		// All batches completed, process=1
 		else
 		{
 			$limit['start'] = "complete";
 			$limit['end'] = "complete";
-			//$limit['vdata'] = $data_to_validate;
 		}
 
 		return $limit;
 	}
-	
+
+	/**
+	 * Function to get invalid_data from #__import_tem
+	 * 
+	 * @return  array   $invalid_data  formatted array of invalid data
+	 *
+	 * @since   1.0.0
+	 */
 	public function getInvalidData()
 	{
 		$batch_id = $this->session->get('batch_id');
@@ -376,13 +376,59 @@ class OsianModelimport extends JModel
 						->where('batch_id =' . $batch_id . ' AND validated = 0');
 		$this->dbo->setQuery($query_field);
 		$invalid_data  = $this->dbo->loadObjectList();
-		
+
 		return $invalid_data;
 	}
+
+	/**
+	 * Function to get invalid_columns from #__import_tem
+	 * 
+	 * @return  array   $merged_array  formatted array of invalid data
+	 *
+	 * @since   1.0.0
+	 */
+	public function getoInvalidData()
+	{
+		$batch_id = $this->session->get('batch_id');
+		$query_field = $this->dbo->getQuery(true);
+		$query_field	->select('invalid_columns as data1')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND validated = 0');
+		$this->dbo->setQuery($query_field);
+		$oinvalid_data  = $this->dbo->loadResultArray();
+		$merged_array = array();
+
+		for ($i = 0; $i < count($oinvalid_data); $i++)
+		{
+			$decoded_array = json_decode($oinvalid_data[$i]);
+
+			foreach ($decoded_array as $darray)
+			{
+				$row_no = $i;
+				$darray->rowno = $row_no;
+				$merged_array[] = json_encode($darray);
+			}
+		}
+
+			return $merged_array;
+	}
+
+	/**
+	 * Function to show preview data before import
+	 *
+	 * @param   string  $start_limit  starting limit sent from ajax request
+	 * 
+	 * @param   string  $end_limit    end limit sent from ajax request
+	 * 
+	 * @param   int     $batch_id     batch id in session
+	 * 
+	 * @return  array   $limit        array of next start limit and end limit
+	 *
+	 * @since   1.0.0
+	 */
 	public function showPreviewData($start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		//$adapter = 'Osian';
 		$adapter = $this->jinput->get('adapter');
 		$batch = 2;
 
@@ -396,14 +442,14 @@ class OsianModelimport extends JModel
 							->where('batch_id =' . $batch_id);
 			$this->dbo->setQuery($query_field);
 			$previewdata  = $this->dbo->loadObjectList();
+			$this->session->set('previewdata', '');
 			$this->session->set('previewdata', $previewdata);
 		}
 		else
 		{
 			$previewdata = $this->session->get('previewdata');
-			
 		}
-//print_r($previewdata);die('previewdata');
+
 		$count = count($previewdata);
 
 		if ($count < $batch)
@@ -416,6 +462,9 @@ class OsianModelimport extends JModel
 			$data = array_slice($previewdata, $start_limit, $batch);
 			$dataa[] = $data;
 		}
+
+		$classname = $adapter . "Adapter";
+		$showtitles = $classname::showpreviewTitle($fieldvalues);
 
 		foreach ($data as $fieldvalues)
 		{
@@ -430,7 +479,6 @@ class OsianModelimport extends JModel
 		{
 			$limit['start'] = $nextlstart;
 			$limit['end'] = $nextlend;
-			//$limit['subtype'] = $type;
 			$limit['csvdata'] = $csdata;
 		}
 		// All batches completed, process=1
@@ -442,11 +490,23 @@ class OsianModelimport extends JModel
 
 		return $limit;
 	}
-	
-		public function importData($start_limit, $end_limit, $batch_id)
+
+	/**
+	 * Function importData used to import data in zoo
+	 *
+	 * @param   string  $start_limit  starting limit sent from ajax request
+	 * 
+	 * @param   string  $end_limit    end limit sent from ajax request
+	 * 
+	 * @param   int     $batch_id     batch id in session
+	 * 
+	 * @return  array   $limit        array of next start limit and end limit
+	 *
+	 * @since   1.0.0
+	 */
+	public function importData($start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		//$adapter = 'Osian';
 		$adapter = $this->jinput->get('adapter');
 		$batch = 2;
 
@@ -460,14 +520,14 @@ class OsianModelimport extends JModel
 							->where('batch_id =' . $batch_id . ' AND validated = 1');
 			$this->dbo->setQuery($query_field);
 			$importdata  = $this->dbo->loadObjectList();
+			$this->session->set('importdata', '');
 			$this->session->set('importdata', $importdata);
 		}
 		else
 		{
 			$importdata = $this->session->get('importdata');
-			
 		}
-//print_r($previewdata);die('previewdata');
+
 		$count = count($importdata);
 
 		if ($count < $batch)
@@ -484,7 +544,8 @@ class OsianModelimport extends JModel
 		foreach ($data as $fieldvalues)
 		{
 			$classname = $adapter . "Adapter";
-			$csdata[] = $classname::import($fieldvalues);
+			$import_id = $classname::import($fieldvalues);
+			$this->updateImportStatus($fieldvalues->id, $import_id, $adapter);
 		}
 
 		$nextlstart = $end_limit;
@@ -494,7 +555,7 @@ class OsianModelimport extends JModel
 		{
 			$limit['start'] = $nextlstart;
 			$limit['end'] = $nextlend;
-			//$limit['subtype'] = $type;
+			$limit['count'] = $count;
 			$limit['csvdata'] = $csdata;
 		}
 		// All batches completed, process=1
@@ -505,5 +566,117 @@ class OsianModelimport extends JModel
 		}
 
 		return $limit;
+	}
+
+	/**
+	 * Function to update status to 1/0 according to records imported/not/
+	 *
+	 * @param   int     $rowid             row id
+	 * 
+	 * @param   int     $imported_item_id  imported item id
+	 * 
+	 * @param   string  $adapter           adapter name
+	 * 
+	 * @return  int  1
+	 *
+	 * @since   1.0.0
+	 */
+	public function updateImportStatus($rowid, $imported_item_id,$adapter)
+	{
+				$object = new stdClass;
+				$object->id = $rowid;
+
+				if ($imported_item_id == 0)
+				{
+					$object->imported = 0;
+				}
+				else
+				{
+					$object->imported = 1;
+				}
+
+				$object->content_id = $adapter . "." . $imported_item_id;
+
+				// Update their details in the users table using id as the primary key.
+				$result = $this->dbo->updateObject('#__import_temp', $object, 'id');
+
+				return 1;
+	}
+
+	/**
+	 * Function to get link fo batch preview.
+	 *
+	 * @return  string  $preview_link  preview link
+	 *
+	 * @since   1.0.0
+	 */
+	public function getPreviewLink()
+	{
+		$batch_id = $this->session->get('batch_id');
+		$adapter = $this->jinput->get('adapter');
+		$classname = $adapter . "Adapter";
+		$preview_link = $classname::getPreviewLink($batch_id);
+
+		return $preview_link;
+	}
+
+	/**
+	 * Function to get total records which are imported in batch to show in report.
+	 *
+	 * @return  int  $imported_count  total count of imported records
+	 *
+	 * @since   1.0.0
+	 */
+	public function getImportedCount()
+	{
+		$batch_id = $this->session->get('batch_id');
+		$query_field = $this->dbo->getQuery(true);
+		$query_field	->select('count(id)')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND imported = 1');
+		$this->dbo->setQuery($query_field);
+		$imported_count  = $this->dbo->loadResult();
+
+		return $imported_count;
+	}
+
+	/**
+	 * Function to get total records which are not imported in batch to show in report.
+	 *
+	 * @return  int  $unimported_count  total count of not imported records
+	 *
+	 * @since   1.0.0
+	 */
+	public function getNImportedCount()
+	{
+		$batch_id = $this->session->get('batch_id');
+		$query_field = $this->dbo->getQuery(true);
+		$query_field	->select('count(id)')
+						->from('#__import_temp')
+						->where('batch_id = ' . $batch_id . ' AND imported = 0');
+		$this->dbo->setQuery($query_field);
+		$unimported_count  = $this->dbo->loadResult();
+
+		return $unimported_count;
+	}
+
+	/**
+	 * Function to get total records in batch to show in report.
+	 *
+	 * @return  int  $total_count  total count
+	 *
+	 * @since   1.0.0
+	 */
+	public function getTotal()
+	{
+		$batch_id = $this->session->get('batch_id');
+		$query_field = $this->dbo->getQuery(true);
+		$query_field	->select('count(id)')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id);
+		$this->dbo->setQuery($query_field);
+		$total_count  = $this->dbo->loadResult();
+
+		return $total_count;
 	}
 }

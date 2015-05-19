@@ -1,29 +1,36 @@
 <?php
 $doc = JFactory::getDocument();
-$doc->addScript(JURI::base().'components/com_osian/js/jquery.min.js');
-$doc->addScript(JURI::base().'components/com_osian/js/import/handsontable.full.min.js');
-$doc->addScript(JURI::base().'components/com_osian/js/import/handsontable.js');
+$jinput  = JFactory::getApplication()->input;
+$option = $jinput->get('option');
+$adapter = $jinput->get('adapter');
 
-$doc->addStyleSheet(JURI::base().'components/com_osian/style/import/handsontable.full.min.css');
-$doc->addStyleSheet(JURI::base().'components/com_osian/style/import/handsontable.css');
+$doc->addScript(JURI::base().'components/'.$option.'/js/jquery.min.js');
+$doc->addScript(JURI::base().'components/'.$option.'/js/import/handsontable.full.min.js');
+$doc->addScript(JURI::base().'components/'.$option.'/js/import/handsontable.js');
+
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/handsontable.full.min.css');
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/handsontable.css');
 
 // If only logged in user can view this.
 if(!($this->id)) {
 	$apps= JFactory::getApplication();
-	$link = 'index.php?option=com_osian&view=logininactive';
+	$link = 'index.php?option='.$option.'&view=logininactive';
 	$apps->redirect($link, '');
 }
-$jinput  = JFactory::getApplication()->input;
-$adapter = $jinput->get('adapter');
+
 ?>
 
     <div class="import-cover">
 
-
+	<div style="margin-bottom : 8px;">
+		<h4><?php echo "Step1 : Add Batch Details" ?></h4>
+	</div>
     <div class="import">
 	
         
 		<form id="bulkimport" name="bulkimport" action="" method="post">
+			<?php if ($this->categories)
+			{ ?>
 				<div>
 					<select id="category" name="category" >
 						<?php 
@@ -33,6 +40,7 @@ $adapter = $jinput->get('adapter');
 						<?php } ?>
 					</select>
 				</div>
+				<?php } ?>
 				<div style="margin-top:10px;">
 					<label><?php echo JText::_( 'IMPORT_BATCH_NAME') ?></label>
 					<input type="text" id="batchname" name="batchname" value="" />
@@ -44,7 +52,7 @@ $adapter = $jinput->get('adapter');
 			<div class="button-area">
 				<input type="submit" value="Submit" id="subform" class="btn btn-default"/>
 			</div>
-			<input type="hidden" name="option" value="com_osian" />
+			<input type="hidden" id ="option" name="option" value="<?php echo $option ?>" />
 			<input type="hidden" name="task" value="import.saveBasicDetails" />
 			<input type="hidden" name="controller" value="import" />
 			<input type="hidden" name="view" value="import" /> 

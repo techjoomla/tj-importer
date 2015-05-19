@@ -1,12 +1,14 @@
-function loadTable(div_id, columnNames)
+function loadTable(div_id, columnNames, invalid_cols)
 {
 	console.log(columnNames);
-	console.log(typeof(columnNames));
+	console.log(invalid_cols);
 	var container = $("#"+div_id);
 
 	if(div_id =='validateData')
 	{
-		dataval = addFirstRow(columnNames);
+		console.log('valiidate');
+		var validatedata =columnNames;
+		dataval = addFirstRow(validatedata);
 		spareRows = 0; 
 	}
 	else if(div_id == 'previewData')
@@ -44,19 +46,27 @@ function loadTable(div_id, columnNames)
 	});
 	
 		function invalidValueRenderer(instance, td, row, col, prop, value, cellProperties) {
+
 		if(row==0)
 		{
 			td.style.fontWeight = 'bold';
 		}
-		$.each(columnNames, function(index, list) {
-//console.log(JSON.parse(list.invalid_columns));
 
-/*console.log("row :"+row);
-console.log("col :"+col);
-console.log("value :"+value);
-console.log("prop :"+prop);*/
-	
-	});
+		jQuery.each( invalid_cols, function( i, mydata ) {
+			
+			if(invalid_cols[i]) {
+				var hdata = JSON.parse(invalid_cols[i])
+
+
+					if(prop == hdata.element_id && row ==hdata.rowno)
+					{
+						td.style.background = '#CEC';
+						td.style.fontWeight = 'bold';
+						td.style.color = 'red';
+						td.style.border = '1px solid red';
+					}
+				}
+		});
 		Handsontable.renderers.TextRenderer.apply(this, arguments);
 	 }
 }
@@ -79,14 +89,14 @@ function addFirstRow(data) {
 		wnnl.push(myArrayInJs);
 	});
 	 var x=wnnl;
-	console.log("x :" + JSON.stringify(data));
+	//console.log("x :" + JSON.stringify(data));
 	return x;
  }
  
 function getPreviewData(start_val, end_val)
 {
 	var hdiv = 'previewData';
-
+	var component_name = $("#option").val();
 	if(start_val == 0)
 	{
 		//Initialize progress bar
@@ -96,12 +106,12 @@ function getPreviewData(start_val, end_val)
 		//$('#mdiv').css('z-index','999');
 		$('#showpercentbar').addClass('showborder');
 		$('#perct').html('0%');
-		$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
+		$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
 		//$('#progress').css('width', '0%');
 	}
 	var adapter = $("#adapter").val();
 		$.ajax({
-		url:'?option=com_osian&task=import.getPreviewData&start_val='+start_val+'&end_val='+end_val+'&adapter='+adapter,
+		url:'?option='+component_name+'&task=import.getPreviewData&start_val='+start_val+'&end_val='+end_val+'&adapter='+adapter,
 		//data:{csvdata:csvdata},
 		dataType: 'json',
 		type: 'POST',
@@ -110,13 +120,14 @@ function getPreviewData(start_val, end_val)
 			if(data['start']=='complete') {
 									document.getElementById("mdiv").style.display = "none";
 									$( '#addblur' ).removeClass( 'getblur' );
+									//$('processtitle').html('');
 								}
 								else
 								{
 									// Call function to push data to handsontable
 									data_arr = getdatatoPush(data.csvdata, hdiv);
 									var percent = Math.round((end_val * 100) / (($('#'+hdiv).handsontable('getData').length)));
-									console.log(percent);
+									//console.log(percent);
 									$('#perct').html(percent +"%");
 									$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
 									$('#progress').css('width', percent+'%');	
@@ -146,8 +157,8 @@ function getdatatoPush(csvdata, divname)
 
 		wnnl.push(myArrayInJs);
 		var datacell = $('#'+divname).handsontable('getDataAtCell',0,0);
-		console.log("wnnl" + JSON.stringify(wnnl));
-		console.log("arrayjs" + JSON.stringify(myArrayInJs));
+		//console.log("wnnl" + JSON.stringify(wnnl));
+		//console.log("arrayjs" + JSON.stringify(myArrayInJs));
 		// By default table is empty. If empty then load data else push data
 		if(!datacell)
 		{
@@ -167,6 +178,7 @@ function getdatatoPush(csvdata, divname)
 }
 function submitForm(start_val, end_val, subtype)
 {
+	var component_name = $("#option").val();
 	if(subtype == 'add')
 	{
 		var hdiv = 'pastedata';
@@ -178,7 +190,7 @@ function submitForm(start_val, end_val, subtype)
 	$("#csvdata").val(JSON.stringify($('#'+hdiv).handsontable('getData')));
 	var csvdata = JSON.stringify($('#'+hdiv).handsontable('getData'));
 	var adapter = $("#adapter").val();
-	console.log(adapter);
+	//console.log(adapter);
 	var batch = 2;
 	if(start_val == 0 && end_val == 0)
 	{
@@ -192,11 +204,11 @@ function submitForm(start_val, end_val, subtype)
 		//$('#mdiv').css('z-index','999');
 		$('#showpercentbar').addClass('showborder');
 		$('#perct').html('0%');
-		$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
+		$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
 		//$('#progress').css('width', '0%');
 	}
 	$.ajax({
-		url:'?option=com_osian&task=import.storeCSVData&start_val='+start_val+'&end_val='+end_val+'&type='+subtype+'&adapter='+adapter,
+		url:'?option='+component_name+'&task=import.storeCSVData&start_val='+start_val+'&end_val='+end_val+'&type='+subtype+'&adapter='+adapter,
 		data:{csvdata:csvdata},
 		dataType: 'json',
 		type: 'POST',
@@ -214,13 +226,13 @@ function submitForm(start_val, end_val, subtype)
 								else
 								{
 									var percent = Math.round((end_val * 100) / (($('#'+hdiv).handsontable('getData').length)));
-									console.log(percent);
+									//console.log(percent);
 									$('#perct').html(percent +"%");
 									$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
 									//$('#progress').css('width', percent+'%');	
 									setTimeout(submitForm(data['start'],data['end'], data['subtype']), 5000);
 								}
-			console.log(data);
+			//console.log(data);
 			//alert('in success');
 		},
 		error : function(resp){ alert('in error'); }
@@ -232,6 +244,7 @@ function submitForm(start_val, end_val, subtype)
 function validateData(start_limit, end_limit)
 {
 	var adapter = $("#adapter").val();
+	var component_name = $("#option").val();
 		if(start_limit == 0 && end_limit == 0)
 		{
 			//Initialize progress bar
@@ -239,12 +252,13 @@ function validateData(start_limit, end_limit)
 			$( '#addblur' ).addClass( 'getblur' );
 			$( '#percentbar' ).addClass( 'percentbars' );
 			//$('#mdiv').css('z-index','999');
+			$('#processtitle').html("<h4>Validating data...</h4>");
 			$('#showpercentbar').addClass('showborder');
 			$('#perct').html('0%');
-			$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
+			$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
 		}
 	$.ajax({
-		url:'?option=com_osian&task=import.validateData&adapter='+adapter+'&start_limit='+start_limit+'&end_limit='+end_limit,
+		url:'?option='+component_name+'&task=import.validateData&adapter='+adapter+'&start_limit='+start_limit+'&end_limit='+end_limit,
 		dataType: 'json',
 		type: 'POST',
 		success: function(data, textStatus, jqXHR) {
@@ -255,7 +269,7 @@ function validateData(start_limit, end_limit)
 				//alert('validation completes');
 				
 				// Redirect to a view which shows invalid records.
-				window.location.href="index.php?option=com_osian&view=import&layout=validate&adapter="+adapter+"&sel=bulkimport";
+				window.location.href="index.php?option="+component_name+"&view=import&layout=validate&adapter="+adapter+"&sel=bulkimport";
 			}
 			else
 			{
@@ -275,7 +289,8 @@ function validateData(start_limit, end_limit)
 function importData(start_limit, end_limit)
 {
 	var adapter = $("#adapter").val();
-	/*	if(start_limit == 0 && end_limit == 0)
+	var component_name = $("#option").val();
+		if(start_limit == 0 && end_limit == 0)
 		{
 			//Initialize progress bar
 			document.getElementById("mdiv").style.display = "block";
@@ -284,31 +299,34 @@ function importData(start_limit, end_limit)
 			//$('#mdiv').css('z-index','999');
 			$('#showpercentbar').addClass('showborder');
 			$('#perct').html('0%');
+			$('#processtitle').html("");
+			$('#processtitle').html("<h4>Importing data...</h4>");
 			$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
-		}*/
+		}
 	$.ajax({
-		url:'?option=com_osian&task=import.importData&adapter='+adapter+'&start_limit='+start_limit+'&end_limit='+end_limit,
+		url:'?option='+component_name+'&task=import.importData&adapter='+adapter+'&start_limit='+start_limit+'&end_limit='+end_limit,
 		dataType: 'json',
 		type: 'POST',
 		success: function(data, textStatus, jqXHR) {
 			if(data['start']=='complete')
 			{
-				//document.getElementById("mdiv").style.display = "none";
-				//$( '#addblur' ).removeClass( 'getblur' );
-				//alert('validation completes');
+				document.getElementById("mdiv").style.display = "none";
+				$( '#addblur' ).removeClass( 'getblur' );
+				alert('Import Successful');
 				
 				// Redirect to a view which shows invalid records.
-				//window.location.href="index.php?option=com_osian&view=import&layout=validate&adapter="+adapter+"&sel=bulkimport";
+				window.location.href="index.php?option=com_osian&view=import&layout=preview&adapter="+adapter+"&sel=bulkimport&imported=1";
 			}
 			else
 			{
 				//alert('Start :'+data['batch']+' - End :'+ data['count']);
-				//var percent = Math.round((end_limit * 100) / (data['count']));
+				var percent = Math.round((end_limit * 100) / (data['count']));
 				//console.log(percent);
-				//$('#perct').html(percent +"%");
-				//$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
+				$('#processtitle').html('<h4>Importing data...</h4>')
+				$('#perct').html(percent +"%");
+				$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
 				
-				//setTimeout(importData(data['start'],data['end']), 5000);
+				setTimeout(importData(data['start'],data['end']), 5000);
 			}
 		},
 		error : function(resp){ alert('in error'); }

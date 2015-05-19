@@ -1,24 +1,32 @@
 <?php
 $doc = JFactory::getDocument();
 $session = JFactory::getSession();
-$doc->addScript(JURI::base()."components/com_osian/js/bulkedit/jquery.min.js");
-$doc->addScript(JURI::base()."components/com_osian/js/import/handsontable.full.min.js");
-//$doc->addScript(JURI::base()."components/com_osian/js/import/handsontable.js");
-$doc->addScript(JURI::base()."components/com_osian/js/import/importdata.js");
-
-$doc->addStyleSheet(JURI::base().'components/com_osian/style/import/handsontable.full.css');
-$doc->addStyleSheet(JURI::base().'components/com_osian/style/import/samples.css');
-$doc->addStyleSheet(JURI::base().'components/com_osian/style/import/bulkimport.css');
 $jinput  = JFactory::getApplication()->input;
+$option = $jinput->get('option');
 $adapter = $jinput->get('adapter');
+$doc->addScript(JURI::base()."components/com_osian/js/bulkedit/jquery.min.js");
+$doc->addScript(JURI::base()."components/".$option."/js/import/handsontable.full.min.js");
+//$doc->addScript(JURI::base()."components/com_osian/js/import/handsontable.js");
+$doc->addScript(JURI::base()."components/".$option."/js/import/importdata.js");
+
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/handsontable.full.css');
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/samples.css');
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/bulkimport.css');
+
+
 
 $columns = $session->get('columns');
 ?>
+<div style="margin-bottom : 8px;margin-left : -33px;">
+		<h4><?php echo "Step2 : Paste data from csv here according to columns." ?></h4>
+</div>
 <form id="step2" name="step2" action="" method="post">
-	<input type="button" id="validateb" name ="validateb" value="Validate"  class="btn btn-default" onclick="submitForm(0,0,'add');" style="margin-right:15px;"/>
-	<input type="button" id="go" name ="go" value="Go"  class="btn btn-default" onclick="validateData(0,0);" style="margin-right:15px;"/>
+	<div id="addbutton">
+		<input type="button" id="validateb" name ="validateb" value="Validate"  class="btn btn-default" onclick="submitForm(0,0,'add');" style="margin-right:15px;"/>
+	</div>
+	<!--<input type="button" id="go" name ="go" value="Go"  class="btn btn-default" onclick="validateData(0,0);" style="margin-right:15px;"/>-->
 	<!-- code for showing progress bar starts -->
-	<div>
+	<div style="margin-left:-38px">
 		<div id='addblur' style=""></div>
 		<div id="mdiv" style="display:none;">
 			<div id="percentbar">
@@ -32,8 +40,8 @@ $columns = $session->get('columns');
 	</div>
 	</div>
 	<!-- code for showing progress bar ends -->
-		<div id="pastedata" class="handsontable" ></div>
-	<input type="hidden" name="option" value="com_osian" />
+		<div id="pastedata" class="handsontable" style="margin-top:14px;" ></div>
+	<input type="hidden" name="option" id="option" value="<?php echo $option; ?>" />
 	<input type="hidden" name="task" id="task" value="import.storeCSVData" />
 	<input type="hidden" name="controller" id="controller" value="import" />
 	<input type="hidden" name="view" id="view" value="import" />

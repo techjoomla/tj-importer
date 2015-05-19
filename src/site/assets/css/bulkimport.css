@@ -9,3 +9,6 @@ background: none repeat scroll 0% 0% rgb(0, 0, 0); position: fixed; height: 100%
 .showborder{border:1px solid #ccc;width: 600px;margin-bottom:4px;}
 #mdiv { width: 500px;height: 20px;position: fixed;top: 50%;left: 50%;margin: -10px 0 0 -250px; z-index:999}
 #progress {background-image:url(../../images/pbar-ani.gif);}
+#addbutton{margin-left:-38px;}
+#validateData{margin-top:14px;}
+#previewData{margin-top:14px;}
