@@ -6,7 +6,7 @@
  * @copyright   Copyright (C) 2013 - 2014 TWS. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
-defined( '_JEXEC' ) or die( 'Restricted access' );
+defined('_JEXEC') or die('Restricted access');
 jimport('joomla.application.component.helper');
 require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
 
@@ -113,7 +113,7 @@ class Build_Hierarchy
 
 			// Call api of zoo to get category information
 
-			if(is_numeric($implode_array_var[0]))
+			if (is_numeric($implode_array_var[0]))
 			{
 				$cat_api = $this->getCatInfo($implode_array_var[0]);
 				$build_config_array[trim($cat_api->alias)]['id'] = $cat_api->id;
