@@ -4,28 +4,28 @@ $session = JFactory::getSession();
 $jinput  = JFactory::getApplication()->input;
 $option = $jinput->get('option');
 $adapter = $jinput->get('adapter');
-$doc->addScript(JURI::base()."components/com_osian/js/bulkedit/jquery.min.js");
-$doc->addScript(JURI::base()."components/".$option."/js/import/handsontable.full.min.js");
-//$doc->addScript(JURI::base()."components/com_osian/js/import/handsontable.js");
-$doc->addScript(JURI::base()."components/".$option."/js/import/importdata.js");
+$doc->addScript(JURI::base().'components/'.$option.'/assets/js/jquery.min.js');
+$doc->addScript(JURI::base().'components/'.$option.'/assets/js/handsontable.full.min.js');
+$doc->addScript(JURI::base().'components/'.$option.'/assets/js/importdata.js');
 
-$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/handsontable.full.css');
-$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/samples.css');
-$doc->addStyleSheet(JURI::base().'components/'.$option.'/style/import/bulkimport.css');
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/assets/css/handsontable.full.css');
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/assets/css/samples.css');
+$doc->addStyleSheet(JURI::base().'components/'.$option.'/assets/css/bulkimport.css');
 
 $batchid = $session->get('batch_id');
 
 $invalid_data = $this->invalid_data; 
 $oinvalid_data = $this->oinvalid_data; 
-//print_r($oinvalid_data);
+//print_r($oinvalid_data);die('val');
 // It means only columns row is remaining invalid. So go to preview page.
 if (count($invalid_data) == 1)
 {
 	$app = JFactory::getApplication();
-	$app->redirect('index.php?option='.$option.'&view=import&layout=preview&adapter='.$adapter.'&sel=bulkimport');
+	$app->redirect('index.php?option='.$option.'&view=import&layout=preview&adapter='.$adapter.'&sel=bulkimport&tmpl=component');
 }
 //print_r($invalid_data);die('invalid');
 ?>
+ <div class="import-cover">
 <div style="margin-bottom : 8px;margin-left : -33px;">
 		<h4><?php echo "Step3 : Correct the values in highlighted cells" ?></h4>
 </div>
@@ -38,7 +38,7 @@ if (count($invalid_data) == 1)
 	</div>
 	<!--<input type="button" id="go" name ="go" value="Go"  class="btn btn-default" onclick="validateData(0,0);" style="margin-right:15px;"/>-->
 	<!-- code for showing progress bar starts -->
-	<div style="margin-left:-38px">
+	<div class="cdiv">
 		<div id='addblur' style=""></div>
 		<div id="mdiv" style="display:none;">
 			<div id="percentbar">
@@ -62,6 +62,7 @@ if (count($invalid_data) == 1)
 	<input type="hidden" id = "adapter" name="adapter" value="<?php echo $adapter ?>" /> 
 	
 </form>
+</div>
 <script type="text/javascript">
 	
 //jQuery(document).ready(function () {

@@ -9,16 +9,19 @@
 defined('_JEXEC') or die('Restricted access');
 jimport('joomla.application.component.model');
 jimport('joomla.database.database.mysqli');
-require_once JPATH_SITE . '/components/com_osian/adapters/osian.php';
+//require_once JPATH_SITE . '/components/com_importer/adapters/question.php';
+require_once JPATH_SITE . '/components/com_importer/adapters/category.php';
+require_once JPATH_SITE . '/components/com_importer/adapters/tmtquiz.php';
+require_once JPATH_SITE . '/components/com_importer/adapters/tmtquestions.php';
 
 /**
- * model class for bulkeditall
+ * model class for import
  *
- * @package     Joomla.Osian
- * @subpackage  com_osian
+ * @package     Joomla.Iporter
+ * @subpackage  com_importer
  * @since       2.5
  */
-class OsianModelimport extends JModel
+class ImporterModelimport extends JModelLegacy
 {
 	/**
 	 * Function constructor.
@@ -33,12 +36,9 @@ class OsianModelimport extends JModel
 		$config		   = JFactory::getConfig();
 		$this->app	   = JFactory::getApplication();
 		$this->dbo	   = JFactory::getDBO();
-		$this->zapp	   = App::getInstance('zoo');
 		$this->session = JFactory::getSession();
-		$this->params  = $this->app->getParams('com_osian');
 		$this->jinput  = JFactory::getApplication()->input;
 		$this->post  = $this->jinput->get('post');
-		$this->params = $this->app->getParams('com_osian');
 	}
 
 	/**
@@ -50,10 +50,28 @@ class OsianModelimport extends JModel
 	 */
 	public function getCategories()
 	{
-		$adapter = $this->jinput->get('adapter');
+		$adapter = ucfirst($this->jinput->get('adapter'));
 		$classname = $adapter . "Adapter";
 		$class_drop_down = $classname::getCategories();
 
+	//	return $class_drop_down;
+		return $class_drop_down;
+	}
+	
+		/**
+	 * Function getCategories retrieves  categories using buildtree class
+	 *
+	 * @return  array   $class_drop_down  array of 'configname/id of cats' as key and name of cat as value/
+	 *
+	 * @since   1.0.0
+	 */
+	public function getDynamicCols()
+	{
+		$adapter = ucfirst($this->jinput->get('adapter'));
+		$classname = $adapter . "Adapter";
+		$class_drop_down = $classname::addDynamicCols();
+
+	//	return $class_drop_down;
 		return $class_drop_down;
 	}
 
@@ -86,19 +104,7 @@ class OsianModelimport extends JModel
 		$this->dbo->insertObject('#__batch_details', $flag1, 'id');
 		$batchid = $this->dbo->insertid();
 
-	/* Following code is done purely for Osian */
-		$data = new stdClass;
-		$data->id = '';
-		$data->batch_no = $batchid;
-		$data->created_date = date_format($date, 'Y-m-d H:i:s');
-		$data->status = 'New';
-		$data->filename = $postdata->get('filename', '1', 'STRING');
-		$data->import_user = $logged_user->id;
-		$data->publish_user = 0;
 
-		$this->dbo->insertObject('#__batch_info', $data, id);
-		unset($data);
-		/* END_-Following code is done purely for Osian */
 		return $batchid;
 	}
 
@@ -139,7 +145,7 @@ class OsianModelimport extends JModel
 	public function storeDatatoTemp($csvData, $start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		$adapter = $this->jinput->get('adapter');
+		$adapter = ucfirst($this->jinput->get('adapter'));
 		$batch = 2;
 
 		if ($start_limit == 0)
@@ -166,7 +172,7 @@ class OsianModelimport extends JModel
 			$classname = $adapter . "Adapter";
 
 			// Make validate = 1 for columns row and spare row.
-			if ($fieldvalues->name == '' || $fieldvalues->recordid == 'recordid')
+			if ($fieldvalues->recordid == 'recordid')
 			{
 				$imported = 1;
 			}
@@ -267,7 +273,7 @@ class OsianModelimport extends JModel
 	 */
 	public function validateValues($batch_id, $start_limit, $end_limit)
 	{
-		$adapter = $this->jinput->get('adapter');
+		$adapter = ucfirst($this->jinput->get('adapter'));
 		$batch = 2;
 
 		if ($start_limit == 0)
@@ -314,6 +320,7 @@ class OsianModelimport extends JModel
 		foreach ($data_valid as $data)
 		{
 			$classname = $adapter . "Adapter";
+			//die('in model');
 			$invalid_array = $classname::validate(json_decode($data->data), $data->id);
 
 			if (!empty($invalid_array))
@@ -395,7 +402,8 @@ class OsianModelimport extends JModel
 						->from('#__import_temp')
 						->where('batch_id =' . $batch_id . ' AND validated = 0');
 		$this->dbo->setQuery($query_field);
-		$oinvalid_data  = $this->dbo->loadResultArray();
+		$oinvalid_data  = $this->dbo->loadColumn();
+		//print_r($oinvalid_data);die('here');
 		$merged_array = array();
 
 		for ($i = 0; $i < count($oinvalid_data); $i++)
@@ -429,7 +437,7 @@ class OsianModelimport extends JModel
 	public function showPreviewData($start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		$adapter = $this->jinput->get('adapter');
+		$adapter = ucfirst($this->jinput->get('adapter'));
 		$batch = 2;
 
 		if ($start_limit == 0)
@@ -475,7 +483,7 @@ class OsianModelimport extends JModel
 		$nextlstart = $end_limit;
 		$nextlend = $nextlstart + $batch;
 
-		if ($count > $nextlstart)
+		if ($count >= $nextlstart)
 		{
 			$limit['start'] = $nextlstart;
 			$limit['end'] = $nextlend;
@@ -507,7 +515,7 @@ class OsianModelimport extends JModel
 	public function importData($start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		$adapter = $this->jinput->get('adapter');
+		$adapter = ucfirst($this->jinput->get('adapter'));
 		$batch = 2;
 
 		if ($start_limit == 0)
@@ -613,7 +621,7 @@ class OsianModelimport extends JModel
 	public function getPreviewLink()
 	{
 		$batch_id = $this->session->get('batch_id');
-		$adapter = $this->jinput->get('adapter');
+		$adapter = ucfirst($this->jinput->get('adapter'));
 		$classname = $adapter . "Adapter";
 		$preview_link = $classname::getPreviewLink($batch_id);
 

@@ -16,7 +16,7 @@ jimport('joomla.application.component.view');
  * @subpackage  com_osian
  * @since       2.5
  */
-class OsianViewimport extends JView
+class ImporterViewimport extends JViewLegacy
 {
 	/**
 	 * Function display.
@@ -29,23 +29,36 @@ class OsianViewimport extends JView
 	 */
 	public function display($tpl = null)
 	{
-		$model = &$this->getModel();
-		$classification  = $model->getCategories();
+		//$model = &$this->getModel();
+		$classification  = $this->get('Categories');
+		//print_r($classification);die('mukta');
 		$this->assignRef('categories', $classification);
+		$dynamic_columns  = $this->get('DynamicCols');
+		//print_r($classification);die('mukta');
+		$this->assignRef('dynamic_columns', $dynamic_columns);
 		$user = &JFactory::getUser();
 		$this->assignRef('id', $user->id);
-		$invalid_data  = $model->getInvalidData();
-		$this->assignRef('invalid_data', $invalid_data);
-		$oinvalid_data  = $model->getoInvalidData();
-		$this->assignRef('oinvalid_data', $oinvalid_data);
-		$previewlink  = $model->getPreviewLink();
-		$this->assignRef('previewlink', $previewlink);
-		$imported  = $model->getImportedCount();
-		$this->assignRef('imported', $imported);
-		$not_imported  = $model->getNImportedCount();
-		$this->assignRef('not_imported', $not_imported);
-		$total  = $model->getTotal();
-		$this->assignRef('total', $total);
+		$jinput  = JFactory::getApplication()->input;
+		$layout = $jinput->get('layout');
+		$imported_val = $jinput->get('imported');
+		if($layout == 'validate')
+		{
+			$invalid_data  = $this->get('InvalidData');
+			$this->assignRef('invalid_data', $invalid_data);
+			$oinvalid_data  = $this->get('oInvalidData');
+			$this->assignRef('oinvalid_data', $oinvalid_data);
+		}
+		if($layout == 'preview' && $imported_val == 1)
+		{
+			$previewlink  = $this->get('PreviewLink');
+			$this->assignRef('previewlink', $previewlink);
+			$imported  = $this->get('ImportedCount');
+			$this->assignRef('imported', $imported);
+			$not_imported  = $this->get('NImportedCount');
+			$this->assignRef('not_imported', $not_imported);
+			$total  = $this->get('Total');
+			$this->assignRef('total', $total);
+		}
 		/*$clas_all_data  = $model->getAllClassList();
 		$this->assignRef('cls_all_data', $clas_all_data);
 		$user = &JFactory::getUser();

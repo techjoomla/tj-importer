@@ -8,16 +8,15 @@
  */
 defined('_JEXEC') or die;
 jimport('joomla.application.component.controllerform');
-require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
 
 /**
- * controller class for bulkeditall
+ * controller class for import
  *
- * @package     Joomla.Osian
- * @subpackage  com_osian
+ * @package     Joomla.Importer
+ * @subpackage  com_importer
  * @since       2.5
  */
-class OsianControllerimport extends JController
+class ImporterControllerimport extends JControllerLegacy
 {
 	/**
 	 * Function constructor.
@@ -32,10 +31,7 @@ class OsianControllerimport extends JController
 		$config		   = JFactory::getConfig();
 		$this->app	   = JFactory::getApplication();
 		$this->dbo	   = JFactory::getDBO();
-		$this->zapp	   = App::getInstance('zoo');
 		$this->session = JFactory::getSession();
-		$this->params  = $this->app->getParams('com_osian');
-		$this->limit   = $this->params->get('limit_id');
 		$this->model   = $this->getModel('import');
 		$this->jinput  = JFactory::getApplication()->input;
 	}
@@ -50,15 +46,18 @@ class OsianControllerimport extends JController
 	public function saveBasicDetails()
 	{
 		$postData = $this->jinput->post;
-		$adapter = $postData->get('adapter', '1', 'STRING');
+		$adapter = ucfirst($postData->get('adapter', '1', 'STRING'));
 		unset($batch_id);
+		$this->session->set('postdata', '');
+		$this->session->set('postdata', $postData);
 		$batch_id = $this->model->storeBatch($postData, $adapter);
 		$columns = $this->model->getColumns($postData->get('category', '1', 'STRING'), $adapter);
 		$this->session->set('columns', '');
 		$this->session->set('columns', $columns);
 		$this->session->set('batch_id', '');
 		$this->session->set('batch_id', $batch_id);
-		$this->app->redirect('index.php?option=com_osian&view=import&layout=pastedata&adapter=Osian&sel=bulkimport');
+		$this->session->set('category', $postData->get('category', '1', 'STRING'));
+		$this->app->redirect('index.php?option=com_importer&view=import&layout=pastedata&adapter='.$adapter.'&sel=bulkimport&tmpl=component');
 	}
 
 	/**
@@ -95,6 +94,7 @@ class OsianControllerimport extends JController
 		$end_limit = $this->jinput->get('end_limit');
 		$returnArray = $this->model->validateValues($batch_id, $start_limit, $end_limit);
 		echo json_encode($returnArray);
+		//die('fff');
 		jexit();
 	}
 
