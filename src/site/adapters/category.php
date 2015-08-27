@@ -21,7 +21,7 @@ class CategoryAdapter
 {
 	/**
 	 * Function constructor.
-	 * 
+	 *
 	 * @since   1.0.0
 	 */
 	public function __construct()
@@ -45,7 +45,6 @@ class CategoryAdapter
 	 */
 	public function getCategories()
 	{
-		
 		$class_drop_down = 0;
 
 		return $class_drop_down;
@@ -84,7 +83,6 @@ class CategoryAdapter
 		$columns_array['params'] = 'params';
 		$columns_array['metadata'] = 'metadata';
 
-
 		return $columns_array;
 	}
 
@@ -92,7 +90,7 @@ class CategoryAdapter
 	 * Function validate used to validate the pasted data..
 	 *
 	 * @param   array  $data   data from one row from #__import_temp table.
-	 * 
+	 *
 	 * @param   int    $rowid  rowid.
 	 *
 	 * @return  returrn row validated 1/0
@@ -101,9 +99,8 @@ class CategoryAdapter
 	 */
 	public function validate($data, $rowid)
 	{
-
-
 		$invalid_array = array();
+
 		return $invalid_array;
 	}
 
@@ -134,7 +131,7 @@ class CategoryAdapter
 	 * Function to build preview.
 	 *
 	 * @param   array  $data        per row data from #__import_temp table.
-	 * 
+	 *
 	 * @param   int    $showtitles  id ri pro items are there then showtitles 1 else o
 	 *
 	 * @return  return $data  updated data
@@ -143,8 +140,6 @@ class CategoryAdapter
 	 */
 	public function preview($data, $showtitles = 0)
 	{
-		
-
 		return $data;
 	}
 
@@ -163,18 +158,17 @@ class CategoryAdapter
 		$imdata = json_decode($data->data);
 		$user = JFactory::getUser();
 		$value = 1;
-	//print_r($imdata);
 		$flag = new stdClass;
-		foreach($imdata as $imkey=>$imval)
-		{ 
-			//print_r($imkey);//die('imdata');
-			//print_r($imval);die('imdata');
-			if($imkey == 'path' || $imkey == 'alias')
+
+		foreach ($imdata as $imkey => $imval)
+		{
+			if ($imkey == 'path' || $imkey == 'alias')
 			{
-				if($imval == '')
+				if ($imval == '')
 				{
 					$value = '0';
 				}
+
 				$flag->$imkey = strtolower($imval);
 			}
 			else
@@ -182,17 +176,19 @@ class CategoryAdapter
 				$flag->$imkey = $imval;
 			}
 		}
-		$flag->created_user_id = $user->id; 
+
+		$flag->created_user_id = $user->id;
 		$flag->created_time = date('Y-m-d H:i:s');
-		$flag->language = '*'; 
-		if($value == 0)
+		$flag->language = '*';
+
+		if ($value == 0)
 		{
 			return 0;
 		}
-							
-//print_r($flag);die;
+
 			$this->dbo->insertObject('#__categories', $flag, 'id');
 			$insert_id = $this->dbo->insertid();
+
 			return $insert_id;
 	}
 

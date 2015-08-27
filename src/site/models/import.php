@@ -9,7 +9,6 @@
 defined('_JEXEC') or die('Restricted access');
 jimport('joomla.application.component.model');
 jimport('joomla.database.database.mysqli');
-//require_once JPATH_SITE . '/components/com_importer/adapters/question.php';
 require_once JPATH_SITE . '/components/com_importer/adapters/category.php';
 require_once JPATH_SITE . '/components/com_importer/adapters/tmtquiz.php';
 require_once JPATH_SITE . '/components/com_importer/adapters/tmtquestions.php';
@@ -54,11 +53,10 @@ class ImporterModelimport extends JModelLegacy
 		$classname = $adapter . "Adapter";
 		$class_drop_down = $classname::getCategories();
 
-	//	return $class_drop_down;
 		return $class_drop_down;
 	}
-	
-		/**
+
+	/**
 	 * Function getCategories retrieves  categories using buildtree class
 	 *
 	 * @return  array   $class_drop_down  array of 'configname/id of cats' as key and name of cat as value/
@@ -71,7 +69,6 @@ class ImporterModelimport extends JModelLegacy
 		$classname = $adapter . "Adapter";
 		$class_drop_down = $classname::addDynamicCols();
 
-	//	return $class_drop_down;
 		return $class_drop_down;
 	}
 
@@ -103,7 +100,6 @@ class ImporterModelimport extends JModelLegacy
 
 		$this->dbo->insertObject('#__batch_details', $flag1, 'id');
 		$batchid = $this->dbo->insertid();
-
 
 		return $batchid;
 	}
@@ -320,7 +316,6 @@ class ImporterModelimport extends JModelLegacy
 		foreach ($data_valid as $data)
 		{
 			$classname = $adapter . "Adapter";
-			//die('in model');
 			$invalid_array = $classname::validate(json_decode($data->data), $data->id);
 
 			if (!empty($invalid_array))
@@ -403,7 +398,6 @@ class ImporterModelimport extends JModelLegacy
 						->where('batch_id =' . $batch_id . ' AND validated = 0');
 		$this->dbo->setQuery($query_field);
 		$oinvalid_data  = $this->dbo->loadColumn();
-		//print_r($oinvalid_data);die('here');
 		$merged_array = array();
 
 		for ($i = 0; $i < count($oinvalid_data); $i++)

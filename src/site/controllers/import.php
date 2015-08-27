@@ -57,7 +57,7 @@ class ImporterControllerimport extends JControllerLegacy
 		$this->session->set('batch_id', '');
 		$this->session->set('batch_id', $batch_id);
 		$this->session->set('category', $postData->get('category', '1', 'STRING'));
-		$this->app->redirect('index.php?option=com_importer&view=import&layout=pastedata&adapter='.$adapter.'&sel=bulkimport&tmpl=component');
+		$this->app->redirect('index.php?option=com_importer&view=import&layout=pastedata&adapter=' . $adapter . '&sel=bulkimport&tmpl=component');
 	}
 
 	/**
@@ -94,7 +94,6 @@ class ImporterControllerimport extends JControllerLegacy
 		$end_limit = $this->jinput->get('end_limit');
 		$returnArray = $this->model->validateValues($batch_id, $start_limit, $end_limit);
 		echo json_encode($returnArray);
-		//die('fff');
 		jexit();
 	}
 

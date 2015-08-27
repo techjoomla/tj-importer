@@ -21,7 +21,7 @@ class TmtquizAdapter
 {
 	/**
 	 * Function constructor.
-	 * 
+	 *
 	 * @since   1.0.0
 	 */
 	public function __construct()
@@ -45,7 +45,6 @@ class TmtquizAdapter
 	 */
 	public function getCategories()
 	{
-		
 		$class_drop_down = 0;
 
 		return $class_drop_down;
@@ -62,7 +61,6 @@ class TmtquizAdapter
 	 */
 	public function getColumns($catid)
 	{
-
 		$columns_array = array();
 		$columns_array['recordid'] = 'recordid';
 		$columns_array['title'] = 'title';
@@ -84,7 +82,6 @@ class TmtquizAdapter
 		$columns_array['termscondi'] = 'Show terms and conditions';
 		$columns_array['answer_sheet'] = 'Show answer sheet';
 
-
 		return $columns_array;
 	}
 
@@ -92,7 +89,7 @@ class TmtquizAdapter
 	 * Function validate used to validate the pasted data..
 	 *
 	 * @param   array  $data   data from one row from #__import_temp table.
-	 * 
+	 *
 	 * @param   int    $rowid  rowid.
 	 *
 	 * @return  returrn row validated 1/0
@@ -101,9 +98,8 @@ class TmtquizAdapter
 	 */
 	public function validate($data, $rowid)
 	{
-
-
 		$invalid_array = array();
+
 		return $invalid_array;
 	}
 
@@ -117,7 +113,6 @@ class TmtquizAdapter
 	public function showpreviewTitle()
 	{
 			$showtitles = 0;
-			
 
 			return $showtitles;
 	}
@@ -126,7 +121,7 @@ class TmtquizAdapter
 	 * Function to build preview.
 	 *
 	 * @param   array  $data        per row data from #__import_temp table.
-	 * 
+	 *
 	 * @param   int    $showtitles  id ri pro items are there then showtitles 1 else o
 	 *
 	 * @return  return $data  updated data
@@ -135,8 +130,6 @@ class TmtquizAdapter
 	 */
 	public function preview($data, $showtitles = 0)
 	{
-		
-
 		return $data;
 	}
 
@@ -156,29 +149,31 @@ class TmtquizAdapter
 		$user = JFactory::getUser();
 		$value = 1;
 		$flag = new stdClass;
-		foreach($imdata as $imkey=>$imval)
-		{ 
+
+		foreach ($imdata as $imkey => $imval)
+		{
 			$flag->$imkey = $imval;
-			if($imkey == 'title' && $imval == '')
+
+			if ($imkey == 'title' && $imval == '')
 			{
 				$value = 0;
 			}
 		}
-		if($value == 0)
+
+		if ($value == 0)
 		{
 			return 0;
 		}
-		$flag->checked_out = 0; 
-		$flag->checked_out_time = ''; 
-		$flag->created_by = $user->id; 
-		$flag->reviewers = $user->id; 
+
+		$flag->checked_out = 0;
+		$flag->checked_out_time = '';
+		$flag->created_by = $user->id;
+		$flag->reviewers = $user->id;
 		$flag->created_on = date('Y-m-d H:i:s');
-		
-							
-//print_r($flag);die;
-			$this->dbo->insertObject('#__tmt_tests', $flag, 'id');
-			$insert_id = $this->dbo->insertid();
-			return $insert_id;
+		$this->dbo->insertObject('#__tmt_tests', $flag, 'id');
+		$insert_id = $this->dbo->insertid();
+
+		return $insert_id;
 	}
 
 	/**
@@ -192,14 +187,20 @@ class TmtquizAdapter
 	 */
 	public function getPreviewLink($batchid)
 	{
-		//$link = JRoute::_('index.php?option=com_zoo&batch=' . $batchid . '&category_id=430&lang=en&layout=preview&task=preview&view=preview');
-
 		return $link;
 	}
-		public function addDynamicCols()
+
+	/**
+	 * Function to add any dynamic column
+	 *
+	 * @return  array $fields
+	 *
+	 * @since   1.0.0
+	 */
+	public function addDynamicCols()
 	{
 		$fields = array();
-		
+
 		return $fields;
 	}
 }
