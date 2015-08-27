@@ -19,6 +19,7 @@
 		<folder>controllers</folder>
 		<folder>models</folder>
 		<folder>assets</folder>
+		<folder>helpers</folder>
 		<folder>views</folder>
 		<folder>adapters</folder>
 		<folder>images</folder>
