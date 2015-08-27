@@ -32,7 +32,7 @@ abstract class ImporterHelperRoute
 	public static function getImporterRoute($adapter = "tmtquestions", $component_name = "com_importer", $extra = "bulkimport")
 	{
 		// Create the link
-		$link = JUri::root().'index.php?option=' . $component_name . '&view=import&adapter=' . $adapter . '&sel=' . $extra . '&tmpl=component';
+		$link = JUri::root() . 'index.php?option=' . $component_name . '&view=import&adapter=' . $adapter . '&sel=' . $extra . '&tmpl=component';
 
 		return $link;
 	}
