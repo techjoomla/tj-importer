@@ -36,6 +36,11 @@
 
 		<files folder="admin">
 			<folder>sql</folder>
+			<folder>models</folder>
+			<folder>views</folder>
+			<filename>importer.php</filename>
+			<filename>controller.php</filename>
+			<filename>config.xml</filename>
 		</files>
 
 	</administration>

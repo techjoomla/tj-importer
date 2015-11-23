@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+	<fieldset name="import_tool" label="Import Tool" description="">			
+	<field name="import_batch_limit" type="text" label="Import batch limit" description="Batch limit for import" default="100" > </field> 
+	</fieldset>
+</config>

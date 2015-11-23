@@ -27,8 +27,6 @@ class OsianAdapter
 	 */
 	public function __construct()
 	{
-		parent::__construct();
-
 		// Set the language in the class
 		$config		   = JFactory::getConfig();
 		$this->app	   = JFactory::getApplication();
@@ -75,7 +73,7 @@ class OsianAdapter
 	public function getColumns($catid)
 	{
 		$catDetails = explode("/", $catid);
-		$file		   = file_get_contents(JPATH_SITE . DS . 'media/zoo/applications/blog/types/' . $catDetails[0] . '.config');
+		$file		   = file_get_contents(JPATH_SITE . '/media/zoo/applications/blog/types/' . $catDetails[0] . '.config');
 		$decode		 = json_decode($file, true);
 		$elements_array = array();
 		$columns_array = array();
@@ -130,73 +128,103 @@ class OsianAdapter
 		$flag = 0;
 		$invalid_array = array();
 		$i = 0;
+		$j = 0;
 
+		if (!empty($data))
+		{
 		foreach ($data as $datakey => $datavalue)
 		{
-			if ($datavalue != '')
-			{
-			if ($datakey == 'alias')
-			{
-				$query_field = $this->dbo->getQuery(true);
-				$query_field->select('id, alias')
-							->from('#__zoo_item')
-							->where('alias = ' . $this->dbo->quote($datavalue));
-				$this->dbo->setQuery($query_field);
-				$newalias   = $this->dbo->loadObject();
-
-				// If alias already exists
-				if ($newalias->id != '')
+				if ($datakey == 'alias')
 				{
-					$flag = 1;
-					$invalid_array[$i]['element_id']   = $datakey;
-					$invalid_array[$i]['value'] = $datavalue;
-					$i++;
-				}
-			}
-			elseif($datakey == 'category')
-			{
-			}
-			elseif ($elements_array[$datakey]['type'] == 'select' || $elements_array[$datakey]['type'] == 'radio')
-			{
-				if (!in_array($datavalue, $opt_arr[$datakey]) && $datavalue != '')
-				{
-					$flag = 1;
-					$invalid_array[$i]['element_id']   = $datakey;
-					$invalid_array[$i]['value'] = $datavalue;
-					$i++;
-				}
-			}
-			elseif ($elements_array[$datakey]['type'] == 'relateditemspro')
-			{
-				$flag = 0;
-				$ripro_vals = explode("|", $datavalue);
-
-				foreach ($ripro_vals as $nv)
-				{
-					$query_field = $this->dbo->getQuery(true);
-					$query_field->select('name')
-								->from('#__zoo_item')
-								->where('alias = ' . $this->dbo->quote($nv));
-					$this->dbo->setQuery($query_field);
-					$mname   = $this->dbo->loadResult();
-
-					// Means it is invalid
-					if ($mname == '')
+					if ($datavalue != '')
 					{
-						$flag = 1;
-						break;
+						$query_field = $this->dbo->getQuery(true);
+						$query_field->select('id, alias')
+									->from('#__zoo_item')
+									->where('alias = ' . $this->dbo->quote($datavalue));
+						$this->dbo->setQuery($query_field);
+						$newalias   = $this->dbo->loadObject();
+
+						// If alias already exists
+						if ($newalias->id != '')
+						{
+							$flag = 1;
+							$invalid_array[$i]['element_id']   = $datakey;
+							$invalid_array[$i]['value'] = $datavalue;
+							$i++;
+						}
 					}
 				}
-
-				if ($flag == 1)
+				elseif($datakey == 'category')
 				{
-					$invalid_array[$i]['element_id']   = $datakey;
-					$invalid_array[$i]['value'] = $datavalue;
+					/*if ($datavalue == '')
+					{
+						$flag = 1;
+						$invalid_array[$i]['element_id']   = $datakey;
+						$invalid_array[$i]['value'] = $datavalue;
+						$i++;
+					}*/
+				}
+				elseif($datakey == 'name')
+				{
+					/*if ($datavalue == '')
+					{
+						$flag = 1;
+						$invalid_array[$i]['element_id']   = $datakey;
+						$invalid_array[$i]['value'] = $datavalue;
+						$i++;
+					}*/
+				}
+				elseif ($elements_array[$datakey]['type'] == 'select' || $elements_array[$datakey]['type'] == 'radio')
+				{
+					if (!in_array($datavalue, $opt_arr[$datakey]) && $datavalue != '')
+					{
+						$flag = 1;
+						$invalid_array[$i]['element_id']   = $datakey;
+						$invalid_array[$i]['value'] = $datavalue;
+						$i++;
+					}
+				}
+				elseif ($elements_array[$datakey]['type'] == 'relateditemspro')
+				{
+					if ($datavalue != '')
+					{
+					$flag = 0;
+					$ripro_vals = explode("|", $datavalue);
+
+					foreach ($ripro_vals as $nv)
+					{
+						$query_field = $this->dbo->getQuery(true);
+						$query_field->select('name')
+									->from('#__zoo_item')
+									->where('alias = ' . $this->dbo->quote($nv));
+						$this->dbo->setQuery($query_field);
+						$mname   = $this->dbo->loadResult();
+
+						// Means it is invalid
+						if ($mname == '')
+						{
+							$flag = 1;
+							break;
+						}
+					}
+
+					if ($flag == 1)
+					{
+						$invalid_array[$i]['element_id']   = $datakey;
+						$invalid_array[$i]['value'] = $datavalue;
+					}
+
+					$i++;
+					}
+				}
+				else
+				{
+					// Do nothing
 				}
 
-				$i++;
-			}
-			}
+				$j++;
+		}
 		}
 
 		$i++;
@@ -316,12 +344,20 @@ class OsianAdapter
 		if (count($cats) == 1)
 		{
 			$item->type = strtolower($cats[0]);
+			$item->state = 1;
 			$cattype = $cats[0];
 		}
 		else
 		{
 			$item->type = strtolower($cats[0]);
 			$cattype = $cats[1];
+			$item->state = 0;
+		}
+
+				// If type blank  return
+		if ($item->type == '')
+		{
+			return 0;
 		}
 
 		$query_field = $this->dbo->getQuery(true);
@@ -329,7 +365,7 @@ class OsianAdapter
 		// Get id of that new category
 		$query_field->select('id')
 		->from('#__zoo_category')
-		->where('alias = "' . $cattype . '"');
+		->where('alias = "' . $cattype . '" OR name = "' . $cattype . '"');
 		$this->dbo->setQuery($query_field);
 		$cid = $this->dbo->loadResult();
 		$id = 1;
@@ -472,7 +508,8 @@ class OsianAdapter
 				$data->batch_no = $batch_id;
 				$data->record_id = $item_details->id;
 				$this->dbo->insertObject('#__batch_item_xref', $data, 'id');
-			/* END -This is done for handling old batch preview tables */
+			/* END - This  is done for handling old batch preview tables */
+
 			return $item_details->id;
 	}
 
@@ -490,5 +527,19 @@ class OsianAdapter
 		$link = JRoute::_('index.php?option=com_zoo&batch=' . $batchid . '&category_id=430&lang=en&layout=preview&task=preview&view=preview');
 
 		return $link;
+	}
+
+	/**
+	 * Function to add dynamic field in first form. Add an array and it will show you that type of field..
+	 *
+	 * @return  return fields
+	 *
+	 * @since   1.0.0
+	 */
+	public function addDynamicCols()
+	{
+		$fields = array();
+
+		return $fields;
 	}
 }

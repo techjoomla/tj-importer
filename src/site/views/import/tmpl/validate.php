@@ -4,6 +4,9 @@ $session = JFactory::getSession();
 $jinput  = JFactory::getApplication()->input;
 $option = $jinput->get('option');
 $adapter = $jinput->get('adapter');
+$app = JFactory::getApplication();
+$params  = $app->getParams($option);
+$batchsize = $params->get('import_batch_limit');
 $doc->addScript(JURI::base().'components/'.$option.'/assets/js/jquery.min.js');
 $doc->addScript(JURI::base().'components/'.$option.'/assets/js/handsontable.full.min.js');
 $doc->addScript(JURI::base().'components/'.$option.'/assets/js/importdata.js');
@@ -59,6 +62,7 @@ if (count($invalid_data) == 1)
 	<input type="hidden" name="view" id="view" value="import" />
 	<input type="hidden" name="layout" id="layout" value="validate" />
 	<input type="hidden" name="csvdata" id="csvdata" value="" />
+	<input type="hidden" id= "batchsize" name="batchsize" value="<?php echo $batchsize ?>" /> 
 	<input type="hidden" id = "adapter" name="adapter" value="<?php echo $adapter ?>" /> 
 	
 </form>

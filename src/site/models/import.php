@@ -9,6 +9,7 @@
 defined('_JEXEC') or die('Restricted access');
 jimport('joomla.application.component.model');
 jimport('joomla.database.database.mysqli');
+require_once JPATH_SITE . '/components/com_importer/adapters/osian.php';
 require_once JPATH_SITE . '/components/com_importer/adapters/category.php';
 require_once JPATH_SITE . '/components/com_importer/adapters/tmtquiz.php';
 require_once JPATH_SITE . '/components/com_importer/adapters/tmtquestions.php';
@@ -35,6 +36,7 @@ class ImporterModelimport extends JModelLegacy
 		$config		   = JFactory::getConfig();
 		$this->app	   = JFactory::getApplication();
 		$this->dbo	   = JFactory::getDBO();
+		$this->params  = $this->app->getParams('com_importer');
 		$this->session = JFactory::getSession();
 		$this->jinput  = JFactory::getApplication()->input;
 		$this->post  = $this->jinput->get('post');
@@ -101,6 +103,19 @@ class ImporterModelimport extends JModelLegacy
 		$this->dbo->insertObject('#__batch_details', $flag1, 'id');
 		$batchid = $this->dbo->insertid();
 
+	/* Following code is done purely for Osian */
+		$data = new stdClass;
+		$data->id = '';
+		$data->batch_no = $batchid;
+		$data->created_date = date_format($date, 'Y-m-d H:i:s');
+		$data->status = 'New';
+		$data->filename = $postdata->get('filename', '1', 'STRING');
+		$data->import_user = $logged_user->id;
+		$data->publish_user = 0;
+
+		$this->dbo->insertObject('#__batch_info', $data, id);
+		unset($data);
+		/* END_-Following code is done purely for Osian */
 		return $batchid;
 	}
 
@@ -142,7 +157,7 @@ class ImporterModelimport extends JModelLegacy
 	{
 		$type = $this->jinput->get('type');
 		$adapter = ucfirst($this->jinput->get('adapter'));
-		$batch = 2;
+		$batch = $this->params->get('import_batch_limit');
 
 		if ($start_limit == 0)
 		{
@@ -150,25 +165,21 @@ class ImporterModelimport extends JModelLegacy
 			$end_limit = $batch;
 		}
 
-		$count = count($csvData);
+		// CSV data empty means records are completed. return with complete status
+		if (empty($csvData))
+		{
+			$limit['start'] = "complete";
+			$limit['end'] = "complete";
 
-		if ($count < $batch)
-		{
-			$data  = $csvData;
-		}
-		else
-		{
-			// Break array in batch size
-			$data = array_slice($csvData, $start_limit, $batch);
-			$dataa[] = $data;
+			return $limit;
 		}
 
-		foreach ($data as $fieldvalues)
+		foreach ($csvData as $fieldvalues)
 		{
 			$classname = $adapter . "Adapter";
 
 			// Make validate = 1 for columns row and spare row.
-			if ($fieldvalues->recordid == 'recordid')
+			if ($fieldvalues->name == '' || $fieldvalues->recordid == 'recordid')
 			{
 				$imported = 1;
 			}
@@ -183,18 +194,9 @@ class ImporterModelimport extends JModelLegacy
 		$nextlstart = $end_limit;
 		$nextlend = $nextlstart + $batch;
 
-		if ($count > $nextlstart)
-		{
-			$limit['start'] = $nextlstart;
-			$limit['end'] = $nextlend;
-			$limit['subtype'] = $type;
-		}
-		// All batches completed, process=1
-		else
-		{
-			$limit['start'] = "complete";
-			$limit['end'] = "complete";
-		}
+		$limit['start'] = $nextlstart;
+		$limit['end'] = $nextlend;
+		$limit['subtype'] = $type;
 
 		return $limit;
 	}
@@ -270,53 +272,68 @@ class ImporterModelimport extends JModelLegacy
 	public function validateValues($batch_id, $start_limit, $end_limit)
 	{
 		$adapter = ucfirst($this->jinput->get('adapter'));
-		$batch = 2;
+		$batch = $this->params->get('import_batch_limit');
+		$query_field = $this->dbo->getQuery(true);
+		$invalid_array = array();
 
 		if ($start_limit == 0)
 		{
 			$i = 0;
 			$start_limit = 0;
 			$end_limit = $batch;
-			$query_field = $this->dbo->getQuery(true);
+			$query = $this->dbo->getQuery(true);
+			$query->select('COUNT(*)')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND validated = 0');
+			$this->dbo->setQuery($query);
+			$count  = $this->dbo->loadResult();
+
+			$this->session->set('ccount', "");
+			$this->session->set('ccount', $count);
+
+			// Start limit is 0 then get first 2 rows
 			$query_field	->select('*')
-							->from('#__import_temp')
-							->where('batch_id =' . $batch_id . ' AND validated = 0');
-			$this->dbo->setQuery($query_field);
-			$data_to_validate  = $this->dbo->loadObjectList();
-			$this->session->set('datatoValidate', '');
-			$this->session->set('datatoValidate', $data_to_validate);
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND validated = 0')
+						->setLimit($batch, $start_limit);
 		}
 		else
 		{
-			$data_to_validate = $this->session->get('datatoValidate');
+			// When limit is next then get last processed id and get next number of records. This was done to avoid batch sequence collpase
+			$last_processed_id = $this->session->set('last_processed_id');
+			$query_field	->select('*')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND validated = 0 AND id >' . $last_processed_id)
+						->setLimit($batch);
 		}
 
-		$count = count($data_to_validate);
+		// Process query
+		$this->dbo->setQuery($query_field);
+		$data_to_validate  = $this->dbo->loadObjectList();
+		$count = $this->session->get('ccount');
 
-		if ($count < $batch)
+		// First row is column names so unset that
+		if ($start_limit == 0)
 		{
-			$data_valid  = $data_to_validate;
-		}
-		else
-		{
-			// Below is done because our first row is column names and we need to skip it.
-			if ($start_limit == 0)
-			{
-				$offset_start = 1;
-			}
-			else
-			{
-				$offset_start = $start_limit;
-			}
-			// Break array in batch size
-			$data_valid = array_slice($data_to_validate, $offset_start, $batch);
-			$dataa[] = $data;
+			unset($data_to_validate{0});
 		}
 
-		foreach ($data_valid as $data)
+		// Query result empty means all records processed
+		if (empty($data_to_validate))
+		{
+			$limit['start'] = "complete";
+			$limit['end'] = "complete";
+
+			return $limit;
+		}
+
+		$last_processed_id = 0;
+
+		foreach ($data_to_validate as $data)
 		{
 			$classname = $adapter . "Adapter";
-			$invalid_array = $classname::validate(json_decode($data->data), $data->id);
+			$class_object = new $classname;
+			$invalid_array = $class_object->validate(json_decode($data->data), $data->id);
 
 			if (!empty($invalid_array))
 			{
@@ -340,24 +357,19 @@ class ImporterModelimport extends JModelLegacy
 			}
 
 			$i++;
+			$last_processed_id = $data->id;
+			$this->session->set('last_processed_id', '');
+			$this->session->set('last_processed_id', $last_processed_id);
 		}
 
 		$nextlstart = $end_limit;
 		$nextlend = $nextlstart + $batch;
 
-		if ($count > $nextlstart)
-		{
-			$limit['start'] = $nextlstart;
-			$limit['end'] = $nextlend;
-			$limit['count'] = $count;
-			$limit['batch'] = $batch;
-		}
-		// All batches completed, process=1
-		else
-		{
-			$limit['start'] = "complete";
-			$limit['end'] = "complete";
-		}
+		$limit['start'] = $nextlstart;
+		$limit['end'] = $nextlend;
+		$limit['count'] = $count;
+		$limit['batch'] = $batch;
+		$limit['start_limit'] = $start_limit;
 
 		return $limit;
 	}
@@ -431,44 +443,41 @@ class ImporterModelimport extends JModelLegacy
 	public function showPreviewData($start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		$adapter = ucfirst($this->jinput->get('adapter'));
-		$batch = 2;
+		$adapter = $this->jinput->get('adapter');
+		$batch = $this->params->get('import_batch_limit');
 
 		if ($start_limit == 0)
 		{
 			$start_limit = 0;
 			$end_limit = $batch;
-			$query_field = $this->dbo->getQuery(true);
-			$query_field	->select('*')
-							->from('#__import_temp')
-							->where('batch_id =' . $batch_id);
-			$this->dbo->setQuery($query_field);
-			$previewdata  = $this->dbo->loadObjectList();
-			$this->session->set('previewdata', '');
-			$this->session->set('previewdata', $previewdata);
 		}
 		else
 		{
-			$previewdata = $this->session->get('previewdata');
+			// Do nothing
 		}
 
+		$query_field = $this->dbo->getQuery(true);
+		$query_field	->select('*')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id)
+						->setLimit($batch, $start_limit);
+		$this->dbo->setQuery($query_field);
+		$previewdata  = $this->dbo->loadObjectList();
 		$count = count($previewdata);
 
-		if ($count < $batch)
+		// Query result empty means all records processed
+		if (empty($previewdata))
 		{
-			$data  = $previewdata;
-		}
-		else
-		{
-			// Break array in batch size
-			$data = array_slice($previewdata, $start_limit, $batch);
-			$dataa[] = $data;
+			$limit['start'] = "complete";
+			$limit['end'] = "complete";
+
+			return $limit;
 		}
 
 		$classname = $adapter . "Adapter";
 		$showtitles = $classname::showpreviewTitle($fieldvalues);
 
-		foreach ($data as $fieldvalues)
+		foreach ($previewdata as $fieldvalues)
 		{
 			$classname = $adapter . "Adapter";
 			$csdata[] = $classname::preview($fieldvalues, $showtitles);
@@ -477,18 +486,9 @@ class ImporterModelimport extends JModelLegacy
 		$nextlstart = $end_limit;
 		$nextlend = $nextlstart + $batch;
 
-		if ($count >= $nextlstart)
-		{
-			$limit['start'] = $nextlstart;
-			$limit['end'] = $nextlend;
-			$limit['csvdata'] = $csdata;
-		}
-		// All batches completed, process=1
-		else
-		{
-			$limit['start'] = "complete";
-			$limit['end'] = "complete";
-		}
+		$limit['start'] = $nextlstart;
+		$limit['end'] = $nextlend;
+		$limit['csvdata'] = $csdata;
 
 		return $limit;
 	}
@@ -509,63 +509,72 @@ class ImporterModelimport extends JModelLegacy
 	public function importData($start_limit, $end_limit, $batch_id)
 	{
 		$type = $this->jinput->get('type');
-		$adapter = ucfirst($this->jinput->get('adapter'));
-		$batch = 2;
+		$adapter = $this->jinput->get('adapter');
+		$batch = $this->params->get('import_batch_limit');
 
 		if ($start_limit == 0)
 		{
 			$start_limit = 0;
 			$end_limit = $batch;
-			$query_field = $this->dbo->getQuery(true);
+			$query = $this->dbo->getQuery(true);
+			$query->select('COUNT(*)')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND validated = 1');
+			$this->dbo->setQuery($query);
+			$count  = $this->dbo->loadResult();
+			$this->session->set('icount', "");
+			$this->session->set('icount', $count);
+			/*$query_field = $this->dbo->getQuery(true);
 			$query_field	->select('*')
 							->from('#__import_temp')
 							->where('batch_id =' . $batch_id . ' AND validated = 1');
 			$this->dbo->setQuery($query_field);
 			$importdata  = $this->dbo->loadObjectList();
 			$this->session->set('importdata', '');
-			$this->session->set('importdata', $importdata);
+			$this->session->set('importdata', $importdata);*/
 		}
 		else
 		{
-			$importdata = $this->session->get('importdata');
+			// $importdata = $this->session->get('importdata');
 		}
 
-		$count = count($importdata);
+		$query_field = $this->dbo->getQuery(true);
+		$query_field	->select('*')
+						->from('#__import_temp')
+						->where('batch_id =' . $batch_id . ' AND validated = 1')
+						->setLimit($batch, $start_limit);
+		$this->dbo->setQuery($query_field);
+		$importdata  = $this->dbo->loadObjectList();
+		$count = $this->session->get('icount');
 
-		if ($count < $batch)
+		// Query result empty means all records processed
+		if (empty($importdata))
 		{
-			$data  = $importdata;
-		}
-		else
-		{
-			// Break array in batch size
-			$data = array_slice($importdata, $start_limit, $batch);
-			$dataa[] = $data;
+			$limit['start'] = "complete";
+			$limit['end'] = "complete";
+
+			return $limit;
 		}
 
-		foreach ($data as $fieldvalues)
+		foreach ($importdata as $fieldvalues)
 		{
 			$classname = $adapter . "Adapter";
-			$import_id = $classname::import($fieldvalues);
+			$class_object = new $classname;
+
+			if (!empty($fieldvalues))
+			{
+				$import_id = $class_object->import($fieldvalues);
+			}
+
 			$this->updateImportStatus($fieldvalues->id, $import_id, $adapter);
 		}
 
 		$nextlstart = $end_limit;
 		$nextlend = $nextlstart + $batch;
 
-		if ($count > $nextlstart)
-		{
-			$limit['start'] = $nextlstart;
-			$limit['end'] = $nextlend;
-			$limit['count'] = $count;
-			$limit['csvdata'] = $csdata;
-		}
-		// All batches completed, process=1
-		else
-		{
-			$limit['start'] = "complete";
-			$limit['end'] = "complete";
-		}
+		$limit['start'] = $nextlstart;
+		$limit['end'] = $nextlend;
+		$limit['count'] = $count;
 
 		return $limit;
 	}

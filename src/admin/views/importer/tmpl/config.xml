@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+	<fieldset
+		name=""
+		label=""
+		description="">
+
+		<field
+			name="article_layout" type="textarea"
+			label="Creator Fields"
+			description="Enter labels of all fields designated as creators/authors (i.e. related fields)"
+			extension="com_osian"
+		/>
+	</fieldset>
+</config>

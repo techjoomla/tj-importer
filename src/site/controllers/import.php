@@ -32,6 +32,8 @@ class ImporterControllerimport extends JControllerLegacy
 		$this->app	   = JFactory::getApplication();
 		$this->dbo	   = JFactory::getDBO();
 		$this->session = JFactory::getSession();
+		$this->params  = $this->app->getParams('com_importer');
+		$this->limit   = $this->params->get('limit_id');
 		$this->model   = $this->getModel('import');
 		$this->jinput  = JFactory::getApplication()->input;
 	}
@@ -129,7 +131,9 @@ class ImporterControllerimport extends JControllerLegacy
 		$batch_id = $this->session->get('batch_id');
 		$start_val = $this->jinput->get('start_limit');
 		$end_val = $this->jinput->get('end_limit');
+		$returnArray = array();
 		$returnArray = $this->model->importData($start_val, $end_val, $batch_id);
+		header('Content-Type: application/json');
 		echo json_encode($returnArray);
 		jexit();
 	}

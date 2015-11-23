@@ -1,7 +1,7 @@
 function loadTable(div_id, columnNames, invalid_cols)
 {
 	//console.log(columnNames);
-	//console.log("invalid cols" +invalid_cols);
+	console.log("invalidcc" +invalid_cols);
 	var container = $("#"+div_id);
 
 	if(div_id =='validateData')
@@ -99,8 +99,12 @@ function getPreviewData(start_val, end_val)
 {
 	var hdiv = 'previewData';
 	var component_name = $("#option").val();
+	var batchsize = $("#batchsize").val();
+	//console.log(batchsize+"batchsize");
+	var batch = batchsize;
 	if(start_val == 0)
 	{
+		end_limit = batch;
 		//Initialize progress bar
 		document.getElementById("mdiv").style.display = "block";
 		$( '#addblur' ).addClass( 'getblur' );
@@ -126,12 +130,17 @@ function getPreviewData(start_val, end_val)
 								}
 								else
 								{
+									console.log('in else');
 									// Call function to push data to handsontable
 									data_arr = getdatatoPush(data.csvdata, hdiv);
 									var percent = Math.round((end_val * 100) / (($('#'+hdiv).handsontable('getData').length)));
+									if(percent > 100)
+									{
+										percent = 100;
+									}
 									//console.log(percent);
 									$('#perct').html(percent +"%");
-									$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
+									$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
 									$('#progress').css('width', percent+'%');	
 									setTimeout(getPreviewData(data['start'],data['end']), 5000);
 								}
@@ -144,7 +153,6 @@ function getdatatoPush(csvdata, divname)
 {
 
 	var wnnl = [];
-	//console.log("csvdata"+JSON.stringify(csvdata));
 	$.each(csvdata, function(index, wnnlist) {
 
 		var parsedData = JSON.parse(csvdata[index].data);
@@ -153,26 +161,23 @@ function getdatatoPush(csvdata, divname)
 		{
 			csvdata[index].data.recordid = wnnlist.id;    
 		}
-
+		console.log(wnnlist);
 		var myArrayInJs =wnnlist['data'];
 		var wnnl1 = [];
 		var wnnl2 = {};
 
 		wnnl.push(myArrayInJs);
 		var datacell = $('#'+divname).handsontable('getDataAtCell',0,0);
-	//	console.log("wnnlist" + JSON.stringify(wnnlist['data']));
-	//	console.log("myArrayInJs" + JSON.stringify(myArrayInJs));
+		//console.log("wnnl" + JSON.stringify(wnnl));
 		//console.log("arrayjs" + JSON.stringify(myArrayInJs));
 		// By default table is empty. If empty then load data else push data
 		if(!datacell)
 		{
-			//console.log('in 1'+JSON.stringify(wnnl));
 			$('#'+divname).handsontable('loadData', wnnlist['data']);
 			
 		}
 		else
 		{
-			//console.log('in 2'+JSON.stringify(wnnl));
 			$('#'+divname).handsontable('getData').push(wnnlist['data']);
 			var myArrayInJs = null;
 		}
@@ -195,11 +200,15 @@ function submitForm(start_val, end_val, subtype)
 	}
 	$("#csvdata").val(JSON.stringify($('#'+hdiv).handsontable('getData')));
 	var csvdata = JSON.stringify($('#'+hdiv).handsontable('getData'));
+	//console.log("csvdata"+csvdata);
+	//console.log("csvdata_slice"+JSON.stringify($('#'+hdiv).handsontable('getData').slice(1, 3)));
 	var adapter = $("#adapter").val();
-	//console.log(adapter);
-	var batch = 2;
+	var batchsize = $("#batchsize").val();
+	//console.log(batchsize+"batchsize");
+	var batch = batchsize;
 	if(start_val == 0 && end_val == 0)
 	{
+		//start_ind = 1;
 		
 		end_val = batch;
 		
@@ -213,9 +222,43 @@ function submitForm(start_val, end_val, subtype)
 		$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
 		//$('#progress').css('width', '0%');
 	}
+
+		var wnnl = [];
+		/*var n_cols  =   $('#'+hdiv).handsontable('countCols');
+		var $container = $('#'+hdiv);
+		var handsontable = $container.data('handsontable');
+		var newrowsdata = $container.data('handsontable').getData(start_val,0,end_val,n_cols);
+		console.log(newrowsdata));
+		var rowsdata =JSON.stringify($('#'+hdiv).handsontable('getData',start_val,0,end_val,n_cols ));*/
+		//var rowsdata =$('#'+hdiv).handsontable('getData',start_val,0,end_val,n_cols);
+		//,start_val,0,end_val,n_cols
+		//console.log("rowsdata" +rowsdata);
+		// get rows from handsontable within start and end values
+		/*for (var i = start_val; i < end_val; i++) {
+
+		var rowvalue = $('#'+hdiv).handsontable('getSourceDataAtRow',i );
+		var rowvaluestring =JSON.stringify($('#'+hdiv).handsontable('getSourceDataAtRow',i ));
+		
+		//if all rows are complete. ie. values are null then send array as null in order to identify php that records are completed
+		if(!rowvaluestring)
+		{
+			wnnl.push = null;
+		}
+		else
+		{
+			wnnl.push(rowvalue);
+		}
+	}*/
+	//console.log(start_val+"-"+end_val);
+	// Slice the data to send in a batch
+	var datatosend = $('#'+hdiv).handsontable('getData').slice(start_val, end_val);
+
+	var datatosend = JSON.stringify(datatosend);
+	//console.log("datatosend"+datatosend);
 	$.ajax({
 		url:'?option='+component_name+'&task=import.storeCSVData&start_val='+start_val+'&end_val='+end_val+'&type='+subtype+'&adapter='+adapter,
-		data:{csvdata:csvdata},
+		//data:{csvdata:csvdata},
+		data:{csvdata:datatosend},
 		dataType: 'json',
 		type: 'POST',
 		success: function(data, textStatus, jqXHR) {
@@ -232,9 +275,13 @@ function submitForm(start_val, end_val, subtype)
 								else
 								{
 									var percent = Math.round((end_val * 100) / (($('#'+hdiv).handsontable('getData').length)));
+									if(percent > 100)
+									{
+										percent = 100;
+									}
 									//console.log(percent);
 									$('#perct').html(percent +"%");
-									$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
+									$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
 									//$('#progress').css('width', percent+'%');	
 									setTimeout(submitForm(data['start'],data['end'], data['subtype']), 5000);
 								}
@@ -251,8 +298,12 @@ function validateData(start_limit, end_limit)
 {
 	var adapter = $("#adapter").val();
 	var component_name = $("#option").val();
+	var batchsize = $("#batchsize").val();
+	//console.log(batchsize+"batchsize");
+	var batch = batchsize;
 		if(start_limit == 0 && end_limit == 0)
 		{
+			end_limit = batch;
 			//Initialize progress bar
 			document.getElementById("mdiv").style.display = "block";
 			$( '#addblur' ).addClass( 'getblur' );
@@ -275,17 +326,21 @@ function validateData(start_limit, end_limit)
 				//alert('validation completes');
 				
 				// Redirect to a view which shows invalid records.
-				window.location.href="index.php?option="+component_name+"&view=import&layout=validate&adapter="+adapter+"&sel=bulkimport&tmpl=component";
+				window.location.href="index.php?option="+component_name+"&view=import&layout=validate&adapter="+adapter+"&sel=bulkimport";
 			}
 			else
 			{
-				//alert('Start :'+data['batch']+' - End :'+ data['count']);
+				//alert('end_limit :'+end_limit+' - count :'+ data['count']);
 				var percent = Math.round((end_limit * 100) / (data['count']));
-				//console.log(percent);
+				console.log("percent"+percent);
+				if(percent > 100)
+				{
+					percent = 100;
+				}
 				$('#perct').html(percent +"%");
-				$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
-				
-				setTimeout(validateData(data['start'],data['end']), 5000);
+				$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
+				//alert('end_limit :'+data['start']+' - count :'+ data['end']);
+				validateData(data['start'],data['end']);
 			}
 		},
 		error : function(resp){ alert('in error'); }
@@ -296,8 +351,12 @@ function importData(start_limit, end_limit)
 {
 	var adapter = $("#adapter").val();
 	var component_name = $("#option").val();
+	var batchsize = $("#batchsize").val();
+	//console.log(batchsize+"batchsize");
+	var batch = batchsize;
 		if(start_limit == 0 && end_limit == 0)
 		{
+			end_limit = batch;
 			//Initialize progress bar
 			document.getElementById("mdiv").style.display = "block";
 			$( '#addblur' ).addClass( 'getblur' );
@@ -307,12 +366,12 @@ function importData(start_limit, end_limit)
 			$('#perct').html('0%');
 			$('#processtitle').html("");
 			$('#processtitle').html("<h4>Importing data...</h4>");
-			$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
+			$('#showpercentbar').html('<div style=\"width:0%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
 		}
 	$.ajax({
 		url:'?option='+component_name+'&task=import.importData&adapter='+adapter+'&start_limit='+start_limit+'&end_limit='+end_limit,
 		dataType: 'json',
-		type: 'POST',
+		type: 'GET',
 		success: function(data, textStatus, jqXHR) {
 			if(data['start']=='complete')
 			{
@@ -321,18 +380,27 @@ function importData(start_limit, end_limit)
 				alert('Import Successful');
 				
 				// Redirect to a view which shows invalid records.
-				window.location.href="index.php?option="+component_name+"&view=import&layout=preview&adapter="+adapter+"&sel=bulkimport&imported=1&tmpl=component";
+				window.location.href="index.php?option=com_osian&view=import&layout=preview&adapter="+adapter+"&sel=bulkimport&imported=1";
 			}
 			else
 			{
 				//alert('Start :'+data['batch']+' - End :'+ data['count']);
 				var percent = Math.round((end_limit * 100) / (data['count']));
+				if(percent > 100)
+				{
+					percent = 100;
+				}
+				//var percent = 100;
 				//console.log(percent);
 				$('#processtitle').html('<h4>Importing data...</h4>')
 				$('#perct').html(percent +"%");
-				$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/'+component_name+'/images/pbar-ani.gif)\">&nbsp;</div>');
-				
-				setTimeout(importData(data['start'],data['end']), 5000);
+				if(percent > 100)
+				{
+					percent = 100;
+				}
+				$('#showpercentbar').html('<div style=\"width:'+percent+'%;background-image:url(components/com_osian/images/pbar-ani.gif)\">&nbsp;</div>');
+				console.log(data['start']+"--"+data['end']);
+				importData(data['start'],data['end']);
 			}
 		},
 		error : function(resp){ alert('in error'); }

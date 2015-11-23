@@ -3,6 +3,9 @@ $doc = JFactory::getDocument();
 $jinput  = JFactory::getApplication()->input;
 $option = $jinput->get('option');
 $adapter = $jinput->get('adapter');
+$app = JFactory::getApplication();
+$params  = $app->getParams($option);
+$batchsize = $params->get('import_batch_limit');
 //echo $adapter;die;
 $doc->addScript(JURI::base().'components/'.$option.'/assets/js/jquery.min.js');
 $doc->addScript(JURI::base().'components/'.$option.'/assets/js/handsontable.full.min.js');
@@ -66,7 +69,8 @@ if(!($this->id)) {
 			<input type="hidden" name="task" value="import.saveBasicDetails" />
 			<input type="hidden" name="controller" value="import" />
 			<input type="hidden" name="view" value="import" /> 
-			<input type="hidden" name="adapter" value="<?php echo $adapter ?>" /> 
+			<input type="hidden" name="adapter" value="<?php echo $adapter ?>" />
+			<input type="hidden" name="batchsize" value="<?php echo $batchsize ?>" />  
 		</form>
 </div>
 </div>

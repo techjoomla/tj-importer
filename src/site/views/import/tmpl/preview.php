@@ -4,6 +4,9 @@ $session = JFactory::getSession();
 $jinput  = JFactory::getApplication()->input;
 $option = $jinput->get('option');
 $adapter = $jinput->get('adapter');
+$app = JFactory::getApplication();
+$params  = $app->getParams($option);
+$batchsize = $params->get('import_batch_limit');
 $imported_val = $jinput->getInt('imported');//die;
 
 //echo "isint".intval($i);
@@ -64,6 +67,7 @@ $link = JURI::Base().'index.php?option='.$option.'&view=import&adapter='.$adapte
 	<input type="hidden" name="view" id="view" value="import" />
 	<input type="hidden" name="layout" id="layout" value="preview" />
 	<input type="hidden" name="csvdata" id="csvdata" value="" />
+	<input type="hidden" id= "batchsize" name="batchsize" value="<?php echo $batchsize ?>" />
 	<input type="hidden" id = "adapter" name="adapter" value="<?php echo $adapter ?>" /> 
 	
 </form>
