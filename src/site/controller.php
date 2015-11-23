@@ -19,7 +19,6 @@ jimport('joomla.application.component.controller');
  */
 class ImporterController extends JControllerLegacy
 {
-
 	/**
 		* Method to display the view
 		*
