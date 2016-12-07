@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fieldset>
+		<field
+				name="id"
+				readonly="true"
+				/>
+		<field
+				name="batch_id"
+				type="text"
+				label="Batch Id"
+				size="40"
+				class="inputbox required"
+				required="true"
+				validation="required"
+				default=""
+				/>
+		<field
+				name="validated"
+				type="text"
+				label="Validated Status"
+				size="40"
+				class="inputbox"
+				default="0"
+				/>
+		<field
+				name="imported"
+				type="text"
+				label="Imported Status"
+				class="inputbox"
+				default="0"
+				/>
+		<field
+				name="invalid_columns"
+				type="textarea"
+				label="Invalid Columns"
+				size="60"
+				row="3"
+				class="inputbox"
+				default=""
+				/>
+		<field
+				name="data"
+				type="textarea"
+				label="Record Data"
+				class="inputbox"
+				default=""
+				/>
+		<field
+				name="content_id"
+				type="text"
+				label="Content Id"
+				class="inputbox"
+				default=""
+				/>
+		<field
+				name="import_error"
+				type="textarea"
+				label="Errors"
+				class="inputbox"
+				default=""
+				/>
+
+	</fieldset>
+</form>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fieldset>
+		<field
+				name="id"
+				type="hidden"
+				/>
+		<field
+				name="batch_name"
+				type="text"
+				label="Batch Name"
+				size="40"
+				class="inputbox required"
+				required="true"
+				validation="required"
+				default=""
+				/>
+		<field
+				name="client"
+				type="text"
+				label="Client"
+				size="40"
+				class="inputbox"
+				default=""
+				/>
+		<field
+				name="import_status"
+				type="textarea"
+				label="Event Information"
+				class="inputbox required"
+				required="true"
+				validation="required"
+				default=""
+				/>
+		<field
+				name="import_user"
+				type="user"
+				label="Importer"
+				size="40"
+				class="inputbox"
+				required="true"
+				default=""
+				/>
+		<field
+				name="created_date"
+				type="calendar"
+				label="Created Date"
+				class="inputbox"
+				default=""
+				/>
+		<field
+				name="updated_date"
+				type="calendar"
+				label="Update date"
+				class="inputbox"
+				required="true"
+				default=""
+				/>
+		<field
+				name="params"
+				type="hidden"
+				/>
+	</fieldset>
+</form>
