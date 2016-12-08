@@ -23,5 +23,7 @@ class plgAPIImporter extends ApiPlugin
 		// Set the login resource to be public
 		$this->setResourceAccess('item', 'public','get');
 		$this->setResourceAccess('item', 'public','post');
+		$this->setResourceAccess('batch', 'public','get');
+		$this->setResourceAccess('batch', 'public','post');
 	}
 }

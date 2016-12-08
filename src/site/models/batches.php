@@ -14,7 +14,7 @@ defined('_JEXEC') or die;
  *
  * @since  0.0.1
  */
-class JTicketingModelEvents extends JModelList
+class ImporterModelBatches extends JModelList
 {
 	/**
 	 * Constructor.
@@ -26,15 +26,6 @@ class JTicketingModelEvents extends JModelList
 	 */
 	public function __construct($config = array())
 	{
-		if (empty($config['filter_fields']))
-		{
-			$config['filter_fields'] = array(
-				'id',
-				'title',
-				'state'
-			);
-		}
-
 		parent::__construct($config);
 	}
 
@@ -51,40 +42,19 @@ class JTicketingModelEvents extends JModelList
 
 		// Create the base select statement.
 		$query->select('*')
-			->from($db->quoteName('#__jticketing_events'));
+			->from($db->quoteName('#__importer_batches'));
 
+		
+		if($batchId = $this->getState('filter.id'))
+		{
+			$query->where("id =" . $batchId);
+		}
 		// Filter: like / search
-		$search = $this->getState('filter.search');
-
-		if (!empty($search))
-		{
-			$like = $db->quote('%' . $search . '%');
-			$query->where('title LIKE ' . $like);
-		}
-
+		
 		// Filter by published state
-		$published = $this->getState('filter.state');
-		if (is_numeric($published))
-		{
-			$query->where('state = ' . (int) $published);
-		}
-
-		// Filter by start & end dates
-		if ($up = $this->getState('filter.start_up') && $down = $this->getState('filter.start_down'))
-		{
-			$query->where("event_start BETWEEN '{$up}' AND '{$down}'");
-		}
-		elseif ($up = $this->getState('filter.start_up'))
-		{
-			$query->where("event_start >= '{$up}'");
-		}
-		elseif ($down = $this->getState('filter.start_down'))
-		{
-			$query->where("event_start <= '{$down}'");
-		}
 		
 		// Add the list ordering clause.
-		$orderCol	= $this->state->get('list.ordering', 'event_start');
+		$orderCol	= $this->state->get('list.ordering', 'id');
 		$orderDirn 	= $this->state->get('list.direction', 'asc');
 
 		$query->order($db->escape($orderCol) . ' ' . $db->escape($orderDirn));
