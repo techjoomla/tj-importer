@@ -1,12 +1,11 @@
 <?php
 /**
- * @package	API
- * @version 1.5
- * @author 	Brian Edgerton
- * @link 	http://www.edgewebworks.com
- * @copyright Copyright (C) 2011 Edge Web Works, LLC. All rights reserved.
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
-*/
+ * @package     Joomla.Plugin
+ * @subpackage  Importer
+ *
+ * @copyright   Copyright (C) 2016 - 2017 Open Source Matters, Inc. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
@@ -15,22 +14,29 @@ JLoader::import('components.com_importer.models.batch', JPATH_SITE);
 JLoader::import('components.com_importer.models.batches', JPATH_SITE);
 JLoader::import('components.com_importer.tables.batch', JPATH_ADMINISTRATOR);
 
+/**
+ * Batch Resource for Importer Plugin.
+ *
+ * @since  2.5
+ */
 class ImporterApiResourceBatch extends ApiResource
 {
-
-	/*
+	/**
 	 * GET function fetch batches or batch based on passed param
 	 *
 	 * ***INPUT PARAMS***
 	 * *id			- batch id (not mandatory)
 	 *
-	 */
+	 * @return  JSON  batch details
+	 *
+	 * @since  3.0
+	 **/
 	public function get()
 	{
 		$app 			= JFactory::getApplication();
 		$jinput 		= $app->input;
 
-		if($batchId = $jinput->get('id', 0, 'INT'))
+		if ($batchId = $jinput->get('id', 0, 'INT'))
 		{
 			$batch_model 	= JModelLegacy::getInstance('batch', 'ImporterModel');
 			$batch = $batch_model->getItem($batchId);
@@ -44,14 +50,12 @@ class ImporterApiResourceBatch extends ApiResource
 
 			$this->plugin->setResponse($batches);
 		}
-		    
 	}
 
-
-	/*
+	/**
 	 * POST function to save batch in importer_batches table
 	 *
-	 * ***INPUT PARAMS***
+	 *  ***INPUT PARAMS***
 	 * *JForm[batch_name]		- object containing records.
 	 * *JForm[client]
 	 * *JForm[import_status]
@@ -59,8 +63,11 @@ class ImporterApiResourceBatch extends ApiResource
 	 * *JForm[updated_date]
 	 * *JForm[import_user]
 	 * *JForm[params]
-	 * 
-	 */
+	 *
+	 * @return  JSON  success of failur status.
+	 *
+	 * @since  3.0
+	 **/
 	public function post()
 	{
 		$app 			= JFactory::getApplication();
@@ -70,6 +77,6 @@ class ImporterApiResourceBatch extends ApiResource
 		$postData 		= $app->input->getArray();
 		$formData 		= $postData['JForm'];
 		print_r($item_model->save($formData));
-		die("in post function of batches");
+		die;
 	}
 }
