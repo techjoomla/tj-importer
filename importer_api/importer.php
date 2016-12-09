@@ -23,8 +23,7 @@ class PlgAPIImporter extends ApiPlugin
 	 *
 	 * @param   string  &$subject  The name of the Plugin group.
 	 * @param   array   $config    Config params array.
-	 *
-	 *
+	 * 
 	 * @since  3.0
 	 */
 	public function __construct(&$subject, $config = array())
