@@ -44,15 +44,6 @@ class ImporterModelBatches extends JModelList
 		$query->select('*')
 			->from($db->quoteName('#__importer_batches'));
 
-		
-		if($batchId = $this->getState('filter.id'))
-		{
-			$query->where("id =" . $batchId);
-		}
-		// Filter: like / search
-		
-		// Filter by published state
-		
 		// Add the list ordering clause.
 		$orderCol	= $this->state->get('list.ordering', 'id');
 		$orderDirn 	= $this->state->get('list.direction', 'asc');
