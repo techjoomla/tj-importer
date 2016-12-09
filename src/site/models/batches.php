@@ -26,6 +26,15 @@ class ImporterModelBatches extends JModelList
 	 */
 	public function __construct($config = array())
 	{
+		if (empty($config['filter_fields']))
+		{
+			$config['filter_fields'] = array(
+				'id',
+				'title',
+				'state'
+			);
+		}
+
 		parent::__construct($config);
 	}
 
