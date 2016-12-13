@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.1" type="plugin" group="api" method="upgrade">
+	<name>Importer Zoo Api's</name>
+	<author>TechJoomla</author>
+	<creationDate>Dec 2016</creationDate>
+	<copyright>Copyright (C) 2015 - 2019 Open Source Matters. All rights reserved.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<authorEmail>connect@techjoomla.com</authorEmail>
+	<authorUrl>connect@techjoomla.com</authorUrl>
+	<version>2.0.0</version>
+	<description>Importer ZOO plugin</description>
+	<files>
+		<filename plugin="importer_zoo">importer_zoo.php</filename>
+        <folder>importer_zoo</folder> 
+	</files>
+</extension>
