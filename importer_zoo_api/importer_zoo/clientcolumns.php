@@ -40,10 +40,9 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 		if (JFile::exists($filePath))
 		{
 			$decodeFile		= (array) json_decode(JFile::read($filePath));
-			$decodeElements = (array)$decodeFile['elements'];
+			$decodeElements = (array) $decodeFile['elements'];
 
-
-			if(!empty($fields))
+			if (!empty($fields))
 			{
 				$filppedFields 	= array_flip($fields);
 				$decodeElements = array_intersect_key($decodeElements, $filppedFields);
@@ -61,7 +60,7 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			// selected field filter needs to apply on columns_array
 			$columns_array = array_merge($colBasicEle_array, $colElement_array);
 
-			if(!empty($fields))
+			if (!empty($fields))
 			{
 				$filppedFields 	= array_flip($fields);
 				$columns_array = array_intersect_key($columns_array, $filppedFields);
@@ -82,9 +81,8 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 
 			$columnsName_array 			= array_values($columns_array);
 			$colReadOnly_array 			= ["recordid", "name"];
-			
-			$finalReturn = [colProperties=>$colProperties_array, colFields=>$columns_array, colIds=>$columnsId_array, colName=>$columnsName_array];
 
+			$finalReturn = [colProperties => $colProperties_array, colFields => $columns_array, colIds => $columnsId_array, colName => $columnsName_array];
 		}
 		else
 		{
@@ -106,26 +104,59 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 		// $this->plugin->setResponse("POST method is not supporter, try GET method");
 		die("in post funtion");
 	}
-	
+
+	/**
+	 * sanitize function to set column properties
+	 * like read-only
+	 *
+	 * @param   Object  $value  field valuevalue data
+	 * 
+	 * @return  Object  $retrnVal  Object of col.
+	 *
+	 * @since  3.0
+	 **/
 	public function sanitize($value)
-    {
-        return strip_tags(trim($value->name));
-    }
+	{
+		return strip_tags(trim($value->name));
+	}
 
+	/**
+	 * setColumns function to set column properties
+	 * like read-only
+	 *
+	 * @param   Object  $value  field valuevalue data
+	 * 
+	 * @return  Object  $retrnVal  Object of col.
+	 *
+	 * @since  3.0
+	 **/
 	public function setColumns($value)
-    {
+	{
 		$retrnVal = ($value->type == 'preprogram') ? "readOnly" : "";
-		return $retrnVal;
-    }
 
+		return $retrnVal;
+	}
+
+	/**
+	 * colProperties function to set column properties
+	 * like read-only
+	 *
+	 * @param   Object  $value  field valuevalue data
+	 * 
+	 * @return  Object  $rtrObk  Object of col.
+	 *
+	 * @since  3.0
+	 **/
 	public function colProperties($value)
-    {
+	{
 		$rtrObk = new stdClass;
 		$rtrObk->data = $value;
 
-		if(in_array($value, $this->colReadOnly_keys))
+		if (in_array($value, $this->colReadOnly_keys))
+		{
 			$rtrObk->readOnly = "true";
-		
+		}
+
 		return $rtrObk;
-    }
+	}
 }
