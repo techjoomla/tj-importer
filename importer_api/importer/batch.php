@@ -75,8 +75,23 @@ class ImporterApiResourceBatch extends ApiResource
 		$item_model		= JModelLegacy::getInstance('batch', 'ImporterModel');
 
 		$postData 		= $app->input->getArray();
+
 		$formData 		= $postData['JForm'];
-		print_r($item_model->save($formData));
-		die;
+		
+		if($formData['id'])
+		{
+			$formData['start_id'] = NULL;
+		}
+
+		$formData['start_id'] = trim(str_replace("\n", ",", $formData['start_id']), ",");
+
+		if($item_model->save($formData))
+		{
+			$this->plugin->setResponse($item_model->getState("batch.id"));
+		}
+		else
+		{
+			$this->plugin->setResponse(false);
+		}
 	}
 }
