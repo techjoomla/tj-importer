@@ -9,8 +9,8 @@
 
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
-
-require_once JPATH_SITE . '/components/com_osian/classes/build_hierarchy.php';
+// load ZOO config
+require_once(JPATH_ADMINISTRATOR.'/components/com_zoo/config.php');
 
 /**
  * Clienttypes Resource for Importer_zoo Plugin.
@@ -28,35 +28,20 @@ class Importer_ZooApiResourceClienttypes extends ApiResource
 	 **/
 	public function get()
 	{
-		$obj				 = new Build_Hierarchy;
-		$all_classifications = $obj->BuildTree();
-		$class_drop_down = $typeList = $mast_drop_down	= array();
+		// Get ZOO App instance
+		$zoo	= App::getInstance('zoo');
+		$types	= array();
 
-		foreach ($all_classifications as $key => $value)
+		// Get instance of blog apps
+		$blogApp = $zoo->table->application->get(1);
+
+		// Get ty
+		foreach($blogApp->getTypes() as $name=>$type)
 		{
-			if ($value['parent'] === 0 && $value['name'] != '')
-			{
-				switch ($value['ismasterlist'])
-				{
-					case 0:
-						$class_drop_down[$value['config'] . "/" . $value['id'] . "/" . $value['ismasterlist']] = $value['name'];
-						break;
-					case 1:
-						$mast_drop_down[$value['config'] . "/" . $value['id'] . "/" . $value['ismasterlist']] = $value['name'];
-						break;
-				}
-			}
+			$types[$type->id] = $type->name;
 		}
 
-		asort($class_drop_down);
-		asort($mast_drop_down);
-		$typeList['classifications']	= $class_drop_down;
-		$typeList['masterlists']		= $mast_drop_down;
-
-		echo "<pre>";
-		print_r($typeList);
-
-		$this->plugin->setResponse($typeList);
+		$this->plugin->setResponse($types);
 	}
 
 	/**

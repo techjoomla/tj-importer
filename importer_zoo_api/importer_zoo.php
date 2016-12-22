@@ -35,5 +35,6 @@ class PlgAPIImporter_Zoo extends ApiPlugin
 		// Set the login resource to be public
 		$this->setResourceAccess('clienttypes', 'public', 'get');
 		$this->setResourceAccess('clientcolumns', 'public', 'get');
+		$this->setResourceAccess('clientrecords', 'public', 'get');
 	}
 }
