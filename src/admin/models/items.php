@@ -54,12 +54,11 @@ class ImporterModelItems extends JModelList
 			->from($db->quoteName('#__importer_items'));
 
 		// Filter: like / search
-		$search = $this->getState('filter.search');
+		$batch_id = $this->getState('filter.batch_id');
 
-		if (!empty($search))
+		if ($batch_id)
 		{
-			$like = $db->quote('%' . $search . '%');
-			$query->where('title LIKE ' . $like);
+			$query->where('batch_id = ' . (int) $batch_id);
 		}
 
 		// Filter by published state
