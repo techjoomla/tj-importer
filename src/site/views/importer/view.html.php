@@ -29,8 +29,8 @@ class ImporterViewImporter extends JViewLegacy
 	{
 		$jinput  = JFactory::getApplication()->input;
 
-		$this->clientApp = $jinput->get('clientapp', '' , 'STRING');
-		$this->batchId = $jinput->get('batch_id', '' , 'INT');
+		$this->clientApp = $jinput->get('clientapp', '', 'STRING');
+		$this->batchId = $jinput->get('batch_id', '', 'INT');
 
 		parent::display();
 	}

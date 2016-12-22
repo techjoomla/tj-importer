@@ -12,5 +12,5 @@ defined('_JEXEC') or die;
 
 // Execute the task.
 $controller = JControllerLegacy::getInstance('Importer');
-$controller->execute(JFactory::getApplication()->input->getCmd('task','display','STRING'));
+$controller->execute(JFactory::getApplication()->input->getCmd('task', 'display', 'STRING'));
 $controller->redirect();
