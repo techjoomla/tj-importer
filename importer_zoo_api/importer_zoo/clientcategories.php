@@ -9,8 +9,9 @@
 
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
-// load ZOO config
-require_once(JPATH_ADMINISTRATOR.'/components/com_zoo/config.php');
+
+// Load ZOO config
+require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
 
 /**
  * Clienttypes Resource for Importer_zoo Plugin.
@@ -36,7 +37,7 @@ class Importer_ZooApiResourceClientcategories extends ApiResource
 		$blogApp = $zoo->table->application->get(1);
 
 		// Get ty
-		foreach($blogApp->getTypes() as $name=>$type)
+		foreach ($blogApp->getTypes() as $name => $type)
 		{
 			$types[$type->id] = $type->name;
 		}

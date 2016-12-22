@@ -10,8 +10,8 @@
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
 
-// load ZOO config
-require_once(JPATH_ADMINISTRATOR.'/components/com_zoo/config.php');
+// Load ZOO config
+require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
 
 /**
  * Clienttypes Resource for Importer_zoo Plugin.
@@ -34,7 +34,7 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		$this->type		= $jinput->get('type', '', 'STRING');
 		$this->fields	= $jinput->get('fields', '', 'ARRAY');
 		$ids			= $jinput->get('ids', '', 'STRING');
-		$this->ids		= array_filter( explode("\n", $ids) );
+		$this->ids		= array_filter(explode("\n", $ids));
 
 		// Get ZOO App instance
 		$zoo	= App::getInstance('zoo');
@@ -44,15 +44,17 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		$records = $zoo->table->item->getByIds($this->ids, $published = false, $user = null, $orderby = '', $ignore_order_priority = false);
 
 		$recordsData = array_map(array($this, 'recordSanitize'), $records);
+		$i = 0;
 
-		$i =0;
-		foreach($recordsData as $recordId=>$recordEle)
+		foreach ($recordsData as $recordId => $recordEle)
 		{
 			$finalRecords[$i]['recordid'] = $recordId;
-			foreach($recordEle as $recEleId=>$recEleVal)
+
+			foreach ($recordEle as $recEleId => $recEleVal)
 			{
 				$finalRecords[$i][$recEleId] = addslashes(strip_tags($recEleVal[0]['value']));
 			}
+
 			$i++;
 		}
 
@@ -72,10 +74,19 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		die("in post funtion");
 	}
 
+	/**
+	 * POST function unnecessary
+	 * 
+	 * @param   Array  $value  JFORM data
+	 * 
+	 * @return  JSON  types details
+	 * 
+	 * @since  3.0
+	 **/
 	public function recordSanitize($value)
-    {
+	{
 		$flippedFields	= array_flip($this->fields);
-		$recordEle		= (array)$value->elements;
+		$recordEle		= (array) $value->elements;
 
 		if (!empty(array_filter($flippedFields)))
 		{
@@ -85,8 +96,7 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		{
 			$records_array = $recordEle;
 		}
-		
-		return $records_array;
-    }
 
+		return $records_array;
+	}
 }
