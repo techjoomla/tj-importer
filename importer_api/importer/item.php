@@ -60,15 +60,13 @@ class ImporterApiResourceItem extends ApiResource
 
 		$tempItems = array();
 
-		foreach($importerItems as $id=>$item)
+		foreach ($importerItems as $id => $item)
 		{
 			$tempItems[$id] = json_decode($item->data);
 			$tempItems[$id]->tempId = $item->id;
-			
 		}
 
 		$this->plugin->setResponse($tempItems);
-
 	}
 
 	/**
@@ -90,7 +88,7 @@ class ImporterApiResourceItem extends ApiResource
 
 		$JForm = array();
 
-		if($records['tempId'] != 'null')
+		if ($records['tempId'] != 'null')
 		{
 			$JForm['id'] = $records['tempId'];
 		}
@@ -103,12 +101,13 @@ class ImporterApiResourceItem extends ApiResource
 		$tempId	= $this->saveTemp($JForm);
 
 		$this->plugin->setResponse($tempId);
-		
 	}
 
 	/**
 	 * saveTemp function to save item data in importer_records table
 	 *
+	 * @param   Array  $JForm  JFORM data
+	 * 
 	 * @return  JSON  success of failur status.
 	 *
 	 * @since  3.0

@@ -77,15 +77,15 @@ class ImporterApiResourceBatch extends ApiResource
 		$postData 		= $app->input->getArray();
 
 		$formData 		= $postData['JForm'];
-		
-		if($formData['id'])
+
+		if ($formData['id'])
 		{
-			$formData['start_id'] = NULL;
+			$formData['start_id'] = null;
 		}
 
 		$formData['start_id'] = trim(str_replace("\n", ",", $formData['start_id']), ",");
 
-		if($item_model->save($formData))
+		if ($item_model->save($formData))
 		{
 			$this->plugin->setResponse($item_model->getState("batch.id"));
 		}
