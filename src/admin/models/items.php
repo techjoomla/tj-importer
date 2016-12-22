@@ -61,27 +61,29 @@ class ImporterModelItems extends JModelList
 			$query->where('batch_id = ' . (int) $batch_id);
 		}
 
-		// Filter by published state
-		//~ $published = $this->getState('filter.state');
-		//~ if (is_numeric($published))
-		//~ {
-			//~ $query->where('state = ' . (int) $published);
-		//~ }
+		/*
+		Filter by published state
+		$published = $this->getState('filter.state');
+		if (is_numeric($published))
+		{
+			$query->where('state = ' . (int) $published);
+		}
 
-		// Filter by start & end dates
-		//~ if ($up = $this->getState('filter.start_up') && $down = $this->getState('filter.start_down'))
-		//~ {
-			//~ $query->where("event_start BETWEEN '{$up}' AND '{$down}'");
-		//~ }
-		//~ elseif ($up = $this->getState('filter.start_up'))
-		//~ {
-			//~ $query->where("event_start >= '{$up}'");
-		//~ }
-		//~ elseif ($down = $this->getState('filter.start_down'))
-		//~ {
-			//~ $query->where("event_start <= '{$down}'");
-		//~ }
-		
+		Filter by start & end dates
+		if ($up = $this->getState('filter.start_up') && $down = $this->getState('filter.start_down'))
+		{
+			$query->where("event_start BETWEEN '{$up}' AND '{$down}'");
+		}
+		elseif ($up = $this->getState('filter.start_up'))
+		{
+			$query->where("event_start >= '{$up}'");
+		}
+		elseif ($down = $this->getState('filter.start_down'))
+		{
+			$query->where("event_start <= '{$down}'");
+		}
+		*/
+
 		// Add the list ordering clause.
 		$orderCol	= $this->state->get('list.ordering', 'id');
 		$orderDirn 	= $this->state->get('list.direction', 'asc');

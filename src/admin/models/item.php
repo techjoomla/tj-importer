@@ -62,7 +62,7 @@ class ImporterModelItem extends JModelAdmin
 
 		return $form;
 	}
-	
+
 	/**
 	 * Method to get the data that should be injected in the form.
 	 *
@@ -84,10 +84,5 @@ class ImporterModelItem extends JModelAdmin
 		}
 
 		return $data;
-	}
-
-	function hit()
-	{
-		return array('check','array','hello', 'return');
 	}
 }
