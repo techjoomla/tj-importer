@@ -28,7 +28,7 @@ class ImporterModelBatch extends JModelAdmin
 	 *
 	 * @since   1.6
 	 */
-	public function getTable($type = 'Event', $prefix = 'JTicketingTable', $config = array())
+	public function getTable($type = 'Batch', $prefix = 'ImporterTable', $config = array())
 	{
 		return JTable::getInstance($type, $prefix, $config);
 	}
@@ -47,8 +47,8 @@ class ImporterModelBatch extends JModelAdmin
 	{
 		// Get the form.
 		$form = $this->loadForm(
-			'com_jticketing.event',
-			'event',
+			'com_importer.batch',
+			'batch',
 			array(
 				'control' => 'jform',
 				'load_data' => $loadData
@@ -74,7 +74,7 @@ class ImporterModelBatch extends JModelAdmin
 	{
 		// Check the session for previously entered form data.
 		$data = JFactory::getApplication()->getUserState(
-			'com_jticketing.edit.jticketing.data',
+			'com_importer.edit.batch.data',
 			array()
 		);
 

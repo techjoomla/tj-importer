@@ -15,7 +15,7 @@ $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/handsonta
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/sweetalert.css');
 
 //$doc->addScript(JURI::base().'components/com_osian/js/sweetalert.min.js');
-$doc->addScript(JURI::base().'components/com_osian/js/jquery.min.js');
+$doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
 $doc->addScript(JURI::base().'components/com_importer/assets/js/handsontable.full.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
@@ -37,7 +37,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 	  <button type="button" class="btn demo-btns btn-secondary"  data-toggle="modal" >Edit Data</button>
 	</div>
 
-	<div class="modal fade" id="myViewModal" role="dialog" data-backdrop="static" data-keyboard="false">
+	<div class="modal fade" id="myViewModal" role="dialog" data-backdrop="static" data-keyboard="false" style="display:none;">
 		<div class="modal-dialog">
 
 		  <!-- Modal content-->
@@ -47,9 +47,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 				  <h4 class="modal-title">This functionality is yet to implement</h4>
 				</div>
 
-				<div class="modal-body" >
-					<div id="step1">
-					</div>
+				<div class="modal-body" id="step1">
 				</div>
 
 				<div class="modal-footer">

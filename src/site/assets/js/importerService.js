@@ -105,9 +105,9 @@ var importerService = {
 			var batchDetails = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data: {records : records, batchDetails : batchDetails}
+					data: {records : JSON.stringify(records), batchDetails : batchDetails}
 				});
-			
+
 			return batchDetails;
 		}
 }

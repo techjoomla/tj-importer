@@ -15,17 +15,28 @@ $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/handsonta
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/sweetalert.css');
 
 //$doc->addScript(JURI::base().'components/com_osian/js/sweetalert.min.js');
-$doc->addScript(JURI::base().'components/com_osian/js/jquery.min.js');
+$doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
 $doc->addScript(JURI::base().'components/com_importer/assets/js/handsontable.full.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 ?>
 
+<style>
+.scroll-container{
+	width: auto;
+	height: 320px;
+	margin: 1rem 0 1rem;
+	overflow: hidden;
+	border-right: 1px solid #000;
+}
+</style>
+
 <div class="progress progress-success">
  <div id="pg-bar" class="bar"></div>
 </div>
 
 <input type="hidden" id="batchId" value=<?php echo $this->batchId; ?>>
+<div id="importer-buttons-container"></div>
 
-<div id="example"></div>
+<div id="example" class="scroll-container"></div>

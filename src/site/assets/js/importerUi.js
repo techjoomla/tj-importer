@@ -9,12 +9,13 @@ var importerUi = {
 	colProperties : '',
 	colName : '',
 	hot : '',
+	postBatchSize : 2,
 
 	step1 : function()
 	{
 		importerService.clientApp = jQuery("#clientApp").val();
 
-		let batchNameBox = importerUi.createTextbox("Batch Name : ", 'JForm[batchName]', 'span12', 'batchName', '')
+		let batchNameBox = importerUi.createTextbox("Batch Name : ", 'JForm[batchName]', '', 'batchName', '')
 		jQuery("#step1").append(batchNameBox);
 
 		let promise = importerService.getTypeList();
@@ -26,18 +27,26 @@ var importerUi = {
 		).done(
 			function() {
 				let clientTypesObj	= jQuery.parseJSON(promise.responseText);
-				let typeDropDown	= importerUi.createDropDownList('Types : ', 'JForm["typeList"]', 'span12', 'typeList', clientTypesObj, false);
 
-				typeDropDown.on('change', importerUi.appendFieldList);
-				jQuery("#step1").append(typeDropDown);
+				if(Object.keys(clientTypesObj).length > 1)
+				{
+					let typeDropDown	= importerUi.createDropDownList('Types : ', 'JForm["typeList"]', '', 'typeList', clientTypesObj, false);
+
+					typeDropDown.on('change', importerUi.appendFieldList);
+					jQuery("#step1").append(typeDropDown);
+				}
+				else
+				{
+					importerUi.appendFieldList('', Object.keys(clientTypesObj)[0]);
+				}
 			}
 		);
 	},
 
-	appendFieldList : function ()
+	appendFieldList : function (event, singleType='')
 		{
-			let typeSelected = jQuery("option:selected", this).val();
-			let promise = importerService.getFieldList(typeSelected);
+			let typeSelected	= (event) ? jQuery("option:selected", this).val() : singleType;
+			let promise			= importerService.getFieldList(typeSelected);
 
 			promise.fail(
 				function() {
@@ -46,7 +55,7 @@ var importerUi = {
 			).done(
 				function() {
 					let clientFieldsObj	= jQuery.parseJSON(promise.responseText);
-					let fieldDropDown	= importerUi.createDropDownList('Fields : ', 'JForm["fieldList"]', 'span12', 'fieldList', clientFieldsObj.colFields, true);
+					let fieldDropDown	= importerUi.createDropDownList('Fields : ', 'JForm["fieldList"]', '', 'fieldList', clientFieldsObj.colFields, true);
 
 					jQuery("#fieldListDiv").remove();
 					jQuery(".fieldButton").remove();
@@ -56,11 +65,11 @@ var importerUi = {
 					let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton', 'fieldButton', 'Submit');
 					submitButton.on('click', importerUi.submitBatch);
 
-					let idTextArea = importerUi.createTextArea("Record id's", 'JForm["idTextArea"]', 'span12', 'idTextArea', 'Submit');
+					let idTextArea = importerUi.createTextArea("Record id's", 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
 					jQuery("#step1").append(fieldDropDown);
 					jQuery("#step1").append(idTextArea);
 					jQuery("#step1").append(submitButton);
-					
+
 				}
 			);
 		},
@@ -167,7 +176,19 @@ var importerUi = {
 			
 		},
 
+	yellowRenderer : function(instance, td, row, col, prop, value, cellProperties) {
+			Handsontable.renderers.TextRenderer.apply(this, arguments);
+			td.style.backgroundColor = 'yellow';
+
+		  },
+
 	loadHandsonView : function(batchColumnsObj, batchRecordsObj=''){
+
+			var yellowRenderer = function(instance, td, row, col, prop, value, cellProperties)
+			{
+				Handsontable.renderers.TextRenderer.apply(this, arguments);
+				td.style.backgroundColor = 'yellow';
+			};
 
 			let handontableParams = {};
 			handontableParams.rowHeaders	= true;
@@ -176,6 +197,7 @@ var importerUi = {
 			handontableParams.columns		= batchColumnsObj.colProperties;
 			handontableParams.contextMenu	= true;
 			handontableParams.stretchH		= 'none';
+			handontableParams.minSpareRows	= 1;
 
 			if(batchRecordsObj)
 			{
@@ -194,13 +216,12 @@ var importerUi = {
 			let validateButton = importerUi.createButton('JForm["validate"]', 'validate', 'validate', 'Validate');
 			validateButton.on('click', importerUi.saveTempRecords);
 
-			jQuery("#container").prepend(validateButton);
+			jQuery("#importer-buttons-container").append(validateButton);
 
 		},
 
 	saveTempRecords : function(event, items=0)
 		{
-console.log(items);
 			let recordsCount = (importerUi.hot.getSourceData()).length;
 			let pgWidth = ((items + 1) / recordsCount)*(100);
 
@@ -264,7 +285,7 @@ console.log(checkItems);
 			$combo = jQuery("<div></div>").attr("class", classs).attr("id", id+"Div");
 
 			if(label){
-				$comboLabel = jQuery("<label></label>").attr("for", name).attr("class", "span3").text(label);
+				$comboLabel = jQuery("<label></label>").attr("for", name).attr("class", "span2").text(label);
 			}
 
 			$comboEle = jQuery("<input></input>").attr("type", "text").attr("id", id).attr('name', name).attr("class", "span5").attr('placeholder', placeholder);
@@ -350,5 +371,3 @@ jQuery(document).ready(function(){
 			importerUi.step1();
 		}
 	});
-
-
