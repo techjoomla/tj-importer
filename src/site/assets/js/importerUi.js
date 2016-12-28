@@ -7,9 +7,11 @@ var importerUi = {
 	batchDetails : '',
 	colFields : '',
 	colProperties : '',
+	batchTempRecords : [],
+	batchTempInvalid : [],
 	colName : '',
 	hot : '',
-	postBatchSize : 2,
+	postItemSize : 40,
 
 	step1 : function()
 	{
@@ -156,13 +158,12 @@ var importerUi = {
 					let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
 					importerUi.loadHandsonView(batchColumnsObj, batchRecordsObj);
 				}
-			);
-			
+			);			
 		},
 
-	getRecordsTemp : function(batchDetailsObj, batchColumnsObj){
+	getRecordsTemp : function(batchDetailsObj, batchColumnsObj, tempOffset = 0){
 
-			let promise = importerService.getRecordsTemp(batchDetailsObj.id);
+			let promise = importerService.getRecordsTemp(batchDetailsObj.id, tempOffset);
 			promise.fail(
 				function() {
 					alert("something went wrong!")
@@ -170,26 +171,39 @@ var importerUi = {
 			).done(
 				function() {
 					let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
-					importerUi.loadHandsonView(batchColumnsObj, batchRecordsObj);
+
+					importerUi.batchTempRecords = importerUi.batchTempRecords.concat(batchRecordsObj.items);
+					importerUi.batchTempInvalid = importerUi.batchTempInvalid.concat(batchRecordsObj.invalid);
+
+					if(importerUi.batchTempRecords.length <  batchRecordsObj.count)
+					{
+						importerUi.getRecordsTemp(batchDetailsObj, batchColumnsObj, importerUi.batchTempRecords.length);
+					}
+					else
+					{
+						importerUi.loadHandsonView(batchColumnsObj, importerUi.batchTempRecords);
+					}
+
+					return;
 				}
 			);
-			
 		},
 
-	yellowRenderer : function(instance, td, row, col, prop, value, cellProperties) {
-			Handsontable.renderers.TextRenderer.apply(this, arguments);
-			td.style.backgroundColor = 'yellow';
+	invalidRowRenderer : function (instance, td, row, col, prop, value, cellProperties)
+		{
+		    Handsontable.renderers.TextRenderer.apply(this, arguments);
 
-		  },
+		    if(prop == "title")
+		    {
+		    	td.style.fontWeight = 'bold';
+			    td.style.color = 'red';
+		    }
 
-	loadHandsonView : function(batchColumnsObj, batchRecordsObj=''){
+		    td.style.background = '#CEC';
+		},
 
-			var yellowRenderer = function(instance, td, row, col, prop, value, cellProperties)
-			{
-				Handsontable.renderers.TextRenderer.apply(this, arguments);
-				td.style.backgroundColor = 'yellow';
-			};
-
+	loadHandsonView : function(batchColumnsObj, batchRecordsObj='')
+		{
 			let handontableParams = {};
 			handontableParams.rowHeaders	= true;
 			handontableParams.colHeaders	= batchColumnsObj.colName;
@@ -204,8 +218,21 @@ var importerUi = {
 				handontableParams.data	= batchRecordsObj;
 			}
 
-			let container = document.getElementById('example');
-			importerUi.hot = new Handsontable(container, handontableParams);
+			handontableParams.cells = function (row, col, prop)
+			{
+				var cellProperties = {};
+				if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row] !== null)
+				{
+					console.log("row = " + row + " objlength = " + batchRecordsObj.length);
+					cellProperties.renderer = importerUi.invalidRowRenderer; // uses function directly
+				}
+
+				return cellProperties;
+			};
+
+			// Below two lines to load handsontable
+			let container	= document.getElementById('example');
+			importerUi.hot	= new Handsontable(container, handontableParams);
 
 			importerUi.hot.updateSettings({
 					afterChange: function(changes, source) {
@@ -216,22 +243,34 @@ var importerUi = {
 			let validateButton = importerUi.createButton('JForm["validate"]', 'validate', 'validate', 'Validate');
 			validateButton.on('click', importerUi.saveTempRecords);
 
+			let saveTempButton = importerUi.createButton('JForm["saveTemp"]', 'saveTemp', 'saveTemp', 'Save Progress');
+			saveTempButton.on('click', importerUi.saveTempRecords);
+
+			let backButton = importerUi.createButton('JForm["back"]', 'back pull-right', 'back', 'Cancel');
+			backButton.on('click', importerUi.goFirst);
+
+			jQuery("#importer-buttons-container").append(saveTempButton);
 			jQuery("#importer-buttons-container").append(validateButton);
+			jQuery("#importer-buttons-container").append(backButton);
 
 		},
 
-	saveTempRecords : function(event, items=0)
+	goFirst : function()
 		{
-			let recordsCount = (importerUi.hot.getSourceData()).length;
-			let pgWidth = ((items + 1) / recordsCount)*(100);
+			window.location = "index.php?option=com_importer&view=importer&clientapp=" + importerUi.batchDetails.client;
+		},
+
+	saveTempRecords : function(event, itemStart=0)
+		{
+			let allItems		= importerUi.hot.getSourceData();
+			let recordsCount	= (importerUi.hot.getSourceData()).length;
+			let pgWidth			= ((itemStart + 1) / recordsCount)*(100);
+			let itemsEnd		= importerUi.postItemSize + itemStart;
 
 			jQuery("#pg-bar").css('width', pgWidth + "%");
 
-			let checkItems = importerUi.hot.getSourceData()[items];
-
-console.log(checkItems);
-
-			let promise = importerService.saveTempRecords(checkItems, importerUi.batchDetails);
+			let checkItems	= allItems.slice(itemStart, itemsEnd);
+			let promise		= importerService.saveTempRecords(checkItems, importerUi.batchDetails);
 
 			promise.fail(
 				function() {
@@ -240,30 +279,83 @@ console.log(checkItems);
 			).done(
 				function() {
 
-					let tempId	= jQuery.parseJSON(promise.responseText);
-					importerUi.hot.getSourceData()[items].tempId = tempId;
+					let tempIds	= jQuery.parseJSON(promise.responseText);
 
-					if ((items + 1) == recordsCount)
+					// Assigning temp table id's to handsontable data
+					for (i = 0; i < tempIds.length; i++)
+					{
+						if(tempIds[i] !== null)
+						{
+							importerUi.hot.getSourceData()[itemStart + i].tempId = tempIds[i];
+							console.log("temp ids - " + tempIds[i]);
+						}
+					}
+
+					if (itemStart >= recordsCount)
 					{
 						alert("saved in temp");
 						jQuery("#pg-bar").css('width', "0%");
+						console.log(importerUi.hot.getSourceData());
+
 						importerUi.updateBatch();
 					}
 					else
 					{
-						importerUi.saveTempRecords(event, (items + 1));
+						if(event.target.id === 'validate')
+						{
+							importerUi.validateTempRecords(event, itemStart);
+						}						
+						else
+						{
+							importerUi.saveTempRecords(event, (itemStart + importerUi.postItemSize));
+						}
 					}
 				}
 			);
 
+			return;			
+		},
 
-			return;
+	validateTempRecords : function(event, itemStart)
+		{
+			let allItems		= importerUi.hot.getSourceData();
+			let recordsCount	= (importerUi.hot.getSourceData()).length;
+			let itemsEnd		= importerUi.postItemSize + itemStart;
+			let pgWidth			= ((itemStart + itemsEnd) / (3*recordsCount))*(100);
+			let checkItems		= allItems.slice(itemStart, itemsEnd);
 
+			jQuery("#pg-bar").css('width', pgWidth + "%");
+
+			let promise = importerService.validateRecords(checkItems, importerUi.batchDetails);
+
+			promise.fail(
+				function() {
+					alert("something went wrong!")
+				}
+			).done(
+				function() {
+				
+					let invalidRec	= jQuery.parseJSON(promise.responseText);
+					
+					if(invalidRec.length)
+					{
+					}
+					else
+					{
+						importerUi.saveTempRecords(event, (itemStart + importerUi.postItemSize));
+					}
+				}
+			);
+
+		},
+
+	updateTempRecords : function(event, itemStart, invalidData)
+		{
 			
 		},
 
 	updateBatch : function()
-		{	
+		{
 			let promise = importerService.updateBatch(importerUi.batchDetails);
 			promise.fail(
 				function() {
@@ -271,7 +363,7 @@ console.log(checkItems);
 				}
 			).done(
 				function() {
-					importerUi.loadHandsonView(batchColumnsObj, batchRecordsObj);
+					
 				}
 			);
 		},

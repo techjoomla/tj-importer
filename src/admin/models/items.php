@@ -50,16 +50,21 @@ class ImporterModelItems extends JModelList
 		$query = $db->getQuery(true);
 
 		// Create the base select statement.
-		$query->select('*')
-			->from($db->quoteName('#__importer_items'));
+		$query->select('*');
+
+		$query->from($db->quoteName('#__importer_items'));
 
 		// Filter: like / search
-		$batch_id = $this->getState('filter.batch_id');
+		$batch_id	= $this->getState('filter.batch_id');
+		$offset		= $this->getState('filter.offset') ? $this->getState('filter.offset') : 0;
+		$limit		= $this->getState('filter.limit');
 
 		if ($batch_id)
 		{
 			$query->where('batch_id = ' . (int) $batch_id);
 		}
+
+		$query->setLimit($limit, $offset);
 
 		/*
 		Filter by published state

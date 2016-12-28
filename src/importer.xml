@@ -17,6 +17,8 @@
 
 	<files folder="site">
 		<folder>models</folder>
+		<folder>views</folder>
+		<folder>assets</folder>
 		<filename>importer.php</filename>
 		<filename>controller.php</filename>
 		<filename>index.html</filename>

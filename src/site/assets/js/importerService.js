@@ -41,27 +41,28 @@ var importerService = {
 			return clientRecords;
 		},
 
-	getRecordsTemp : function(batchId)
+	getRecordsTemp : function(batchId, itemOffset)
 		{
 			let tempRecords = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data : {batch_id: batchId}
+					data : {batch_id: batchId, offset: itemOffset, limit : 20}
 				});
 
 			return tempRecords;
 		},
 
-	saveBatch : function(batchParams, recordsSelected){
-			var	clientApp	= this.clientApp;
-			var batch_name = batchParams.batchName;
-			var client	= clientApp;
-			var import_status = 0;
-			var created_date = '';
-			var updated_date = '';
-			var import_user = 1234;	
-			var params		= batchParams;
-			var start_id	= '';
+	saveBatch : function(batchParams, recordsSelected)
+		{
+			var	clientApp		= this.clientApp;
+			var batch_name		= batchParams.batchName;
+			var client			= clientApp;
+			var import_status	= 0;
+			var created_date	= '';
+			var updated_date	= '';
+			var import_user		= 1234;	
+			var params			= batchParams;
+			var start_id		= '';
 
 			var saveResult = jQuery.post( 
 								"index.php?option=com_api&app=importer&resource=batch&format=raw", 
@@ -78,19 +79,19 @@ var importerService = {
 			return saveResult;
 		},
 
-	updateBatch : function(batchDetails){
-
-			var batchDetails = jQuery.ajax({
+	updateBatch : function(batchDetails)
+		{
+			var batchUpdated = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer&resource=batch&format=raw",
 					data: {JForm:batchDetails}
 				});
 			
-			return batchDetails;
+			return batchUpdated;
 		},
 
-	getBatch : function(batchId){
-		
+	getBatch : function(batchId)
+		{
 			var batchDetails = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=batch&format=raw",
@@ -100,15 +101,27 @@ var importerService = {
 			return batchDetails;
 		},
 
-	saveTempRecords : function(records, batchDetails){
-
-			var batchDetails = jQuery.ajax({
+	saveTempRecords : function(records, batchDetails)
+		{
+			var savedTemp = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data: {records : JSON.stringify(records), batchDetails : batchDetails}
+					data: {records : JSON.stringify(records), batchDetails : JSON.stringify(batchDetails)}
 				});
 
-			return batchDetails;
+			return savedTemp;
+		},
+
+	validateRecords : function(checkItems, batchDetails)
+		{
+			var validating  = jQuery.ajax({
+					type: "POST",
+					url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientvalidate&format=raw",
+					data: {records : JSON.stringify(checkItems), batchDetails : JSON.stringify(batchDetails)}
+				});
+
+			return validating;
+			
 		}
 }
 	
