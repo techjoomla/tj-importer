@@ -36,5 +36,6 @@ class PlgAPIImporter_Zoo extends ApiPlugin
 		$this->setResourceAccess('clienttypes', 'public', 'get');
 		$this->setResourceAccess('clientcolumns', 'public', 'get');
 		$this->setResourceAccess('clientrecords', 'public', 'get');
+		$this->setResourceAccess('clientvalidate', 'public', 'post');
 	}
 }
