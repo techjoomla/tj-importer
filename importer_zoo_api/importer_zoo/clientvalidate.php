@@ -56,11 +56,11 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 			$invalidRec		= array();
 			$invalidEle		= array();
 
-			foreach($checkRecords as $record)
+			foreach ($checkRecords as $record)
 			{
 				$invalidEle	= $this->validate($record, $decodeElements);
 
-				if(!empty($invalidEle))
+				if (!empty($invalidEle))
 				{
 					$invalidRec[$record->tempId] = $invalidEle;
 				}
@@ -76,9 +76,18 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 		return;
 	}
 
-	public function validate()
+	/**
+	 * POST function unnecessary
+	 *
+	 * @param   Array  $record          A single record from temp table
+	 * @param   Array  $decodeElements  Field element details
+	 * 
+	 * @return  STRING  error message
+	 * 
+	 * @since  3.0
+	 **/
+	public function validate($record, $decodeElements)
 	{
 		return array();
 	}
-
 }

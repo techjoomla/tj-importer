@@ -82,7 +82,10 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			$columnsName_array 			= array_values($columns_array);
 			$colReadOnly_array 			= ["recordid", "name"];
 
-			$finalReturn = ['colProperties' => $colProperties_array, 'colFields' => $columns_array, 'colIds' => $columnsId_array, 'colName' => $columnsName_array];
+			$finalReturn['colProperties']	= $colProperties_array;
+			$finalReturn['colFields']		= $columns_array;
+			$finalReturn['colIds']			= $columnsId_array;
+			$finalReturn['colName']			= $columnsName_array;
 		}
 		else
 		{
