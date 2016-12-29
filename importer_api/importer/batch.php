@@ -10,8 +10,8 @@
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
 
-JLoader::import('components.com_importer.models.batch', JPATH_SITE);
-JLoader::import('components.com_importer.models.batches', JPATH_SITE);
+JLoader::import('components.com_importer.models.batch', JPATH_ADMINISTRATOR);
+JLoader::import('components.com_importer.models.batches', JPATH_ADMINISTRATOR);
 JLoader::import('components.com_importer.tables.batch', JPATH_ADMINISTRATOR);
 
 /**
@@ -78,7 +78,7 @@ class ImporterApiResourceBatch extends ApiResource
 
 		$formData 		= $postData['JForm'];
 
-		if ($formData['id'])
+		if (isset($formData['id']))
 		{
 			$formData['start_id'] = null;
 		}

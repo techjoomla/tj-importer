@@ -41,32 +41,36 @@ class ImporterApiResourceItem extends ApiResource
 
 		$batch_id		= $jinput->get('batch_id', '', 'INT');
 
-		$limit			= $jinput->get('limit', '', 'INT');
-		$offset			= $jinput->get('offset', '', 'INT');
+		$limit			= $jinput->get('limit', 20, 'INT');
+		$offset			= $jinput->get('offset', 0, 'INT');
 
-		if ( ($batch_id > 0) && ($offset >= 0) && ($limit > 0) )
+		if ( ($batch_id > 0) && ($offset >= 0) && $limit > 0)
 		{
 			$items_model->setState('filter.batch_id', $batch_id);
 			$items_model->setState('filter.limit', $limit);
 			$items_model->setState('filter.offset', $offset);
 
 			$importerItems	= $items_model->getItems();
+			$importerItemsTotal	= $items_model->getTotal();
 		}
 		else
 		{
 			$items_model->setState('filter.batch_id', $batch_id);
-			$importerItems	= $items_model->getItems();
+			$importerItems		= $items_model->getItems();
+			$importerItemsTotal	= $items_model->getTotal();
 		}
 
 		$tempItems = array();
+		$importerInvalidItems = array();
 
 		foreach ($importerItems as $id => $item)
 		{
 			$tempItems[$id] = json_decode($item->data);
 			$tempItems[$id]->tempId = $item->id;
+			$importerInvalidItems[] = $item->invalid_columns;
 		}
 
-		$this->plugin->setResponse($tempItems);
+		$this->plugin->setResponse(array('items' => $tempItems, 'count' => $importerItemsTotal, 'invalid' => $importerInvalidItems));
 	}
 
 	/**
@@ -81,26 +85,63 @@ class ImporterApiResourceItem extends ApiResource
 	 **/
 	public function post()
 	{
-		$jinput			= JFactory::getApplication()->input;
+		$tempKeys	= array();
+		$jinput		= JFactory::getApplication()->input;
+		$records	= (array) json_decode($jinput->get('records', '', 'STRING'));
+		$batch		= (array) json_decode($jinput->get('batchDetails', '', 'STRING'));
 
-		$records = $jinput->get('records', '', 'ARRAY');
-		$batch	 = $jinput->get('batchDetails', '', 'ARRAY');
+		$invalidDataStr		= $jinput->get('invalidData', '', 'STRING');
 
-		$JForm = array();
-
-		if ($records['tempId'] != 'null')
+		if (trim($invalidDataStr, '"'))
 		{
-			$JForm['id'] = $records['tempId'];
+			$invalidData = (array) json_decode($invalidDataStr);
+
+			foreach ($invalidData as $invalidRecId => $invalidRecField)
+			{
+				$JForm = array();
+				$JForm['id'] = $invalidRecId;
+
+				if ($invalidRecField)
+				{
+					$JForm['invalid_columns'] = json_encode((object) $invalidRecField);
+				}
+				else
+				{
+					$JForm['invalid_columns'] = '';
+				}
+
+				$tempId				= $this->saveTemp($JForm);
+			}
+
+			$this->plugin->setResponse(true);
 		}
 
-		$JForm['batch_id']	= $batch['id'];
+		foreach ($records as $index => $record)
+		{
+			$record = (array) $record;
+			$JForm = array();
 
-		$JForm['data']			= json_encode($records);
-		$JForm['content_id']	= $records['recordid'];
+			if (!empty(array_filter($record)))
+			{
+				if (isset($record['tempId']))
+				{
+					$JForm['id'] = $record['tempId'];
+				}
 
-		$tempId	= $this->saveTemp($JForm);
+				if (isset($record['recordid']))
+				{
+					$JForm['content_id']	= $record['recordid'];
+				}
 
-		$this->plugin->setResponse($tempId);
+				$JForm['batch_id']	= $batch['id'];
+				$JForm['data']		= json_encode($record);
+
+				$tempId				= $this->saveTemp($JForm);
+				$tempKeys[$index]	= $tempId;
+			}
+		}
+
+		$this->plugin->setResponse($tempKeys);
 	}
 
 	/**
