@@ -37,11 +37,11 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		$this->ids		= array_filter(explode("\n", $ids));
 
 		// Get ZOO App instance
-		$zoo	= App::getInstance('zoo');
+		$this->zapp	= App::getInstance('zoo');
 		$types	= array();
 
 		// Get instance of blog apps
-		$records = $zoo->table->item->getByIds($this->ids, $published = false, $user = null, $orderby = '', $ignore_order_priority = false);
+		$records = $this->zapp->table->item->getByIds($this->ids, $published = false, $user = null, $orderby = '', $ignore_order_priority = false);
 
 		$recordsData = array_map(array($this, 'recordSanitize'), $records);
 		$i = 0;
@@ -52,7 +52,7 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 
 			foreach ($recordEle as $recEleId => $recEleVal)
 			{
-				$finalRecords[$i][$recEleId] = addslashes(strip_tags($recEleVal[0]['value']));
+				$finalRecords[$i][$recEleId] = addslashes(strip_tags($recEleVal));
 			}
 
 			$i++;
@@ -85,6 +85,9 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 	 **/
 	public function recordSanitize($value)
 	{
+		$catId = $value->params->get('config.primary_category');
+		$catDet	= $this->zapp->table->category->get($catId);
+
 		$flippedFields	= array_flip($this->fields);
 		$recordEle		= (array) $value->elements;
 
@@ -97,6 +100,27 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 			$records_array = $recordEle;
 		}
 
-		return $records_array;
+		$records_array['name'][0]['value'] = $value->name;
+		$records_array['alias'][0]['value'] = $value->alias;
+		$recordFinalArray = array();
+
+		foreach ($records_array as $fieldKey => $fieldValue)
+		{
+			$valueString = '';
+
+			foreach ($fieldValue as $fieldVal)
+			{
+				$keyy	= array_keys($fieldVal);
+				$keyyy	= $keyy[0];
+
+				$valueString .= $fieldVal[$keyyy] . "|";
+			}
+
+			$recordFinalArray[$fieldKey] = trim($valueString, "|");
+		}
+
+		$recordFinalArray['category'] = $catDet->name;
+
+		return $recordFinalArray;
 	}
 }

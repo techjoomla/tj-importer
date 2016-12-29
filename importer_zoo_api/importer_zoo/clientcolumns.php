@@ -52,6 +52,7 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			$colBasicEle_array['recordid']	= 'recordid';
 			$colBasicEle_array['name']		= 'name';
 			$colBasicEle_array['alias']		= 'alias';
+			$colBasicEle_array['category']		= 'category';
 
 			// Non-core fields of zoo
 			$colElement_array = array_map(array($this, 'sanitize'), $decodeElements);
@@ -80,7 +81,6 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			$colProperties_array 	= array_map(array($this, 'colProperties'), $columnsId_array);
 
 			$columnsName_array 			= array_values($columns_array);
-			$colReadOnly_array 			= ["recordid", "name"];
 
 			$finalReturn['colProperties']	= $colProperties_array;
 			$finalReturn['colFields']		= $columns_array;
