@@ -10,6 +10,9 @@
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
 
+// Load ZOO config
+require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
+
 /**
  * Clientcolumns Resource for Importer_zoo Plugin.
  *
@@ -39,15 +42,14 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	 **/
 	public function post()
 	{
+		$this->zapp		= App::getInstance('zoo');
 		$columns_array	= $decodeFile = array();
 		$jinput			= JFactory::getApplication()->input;
 
 		$checkRecords 	= (array) json_decode($jinput->get('records', '', 'STRING'));
 		$batch 			= json_decode($jinput->get('batchDetails', '', 'STRING'));
-
 		$type			= $batch->params->type;
-
-		$filePath	= JPATH_SITE . '/media/zoo/applications/blog/types/' . $type . '.config';
+		$filePath		= JPATH_SITE . '/media/zoo/applications/blog/types/' . $type . '.config';
 
 		if (JFile::exists($filePath))
 		{
@@ -56,14 +58,12 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 			$invalidRec		= array();
 			$invalidEle		= array();
 
+			$decodeElements['alias']->type = 'alias';
+
 			foreach ($checkRecords as $record)
 			{
-				$invalidEle	= $this->validate($record, $decodeElements);
-
-				if (!empty($invalidEle))
-				{
-					$invalidRec[$record->tempId] = $invalidEle;
-				}
+				$invalidEle	= $this->validate((array) $record, $decodeElements);
+				$invalidRec[$record->tempId] = $invalidEle;
 			}
 
 			$this->plugin->setResponse($invalidRec);
@@ -88,6 +88,29 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	 **/
 	public function validate($record, $decodeElements)
 	{
-		return array();
+		$invalidFields = null;
+
+		if (!empty(array_filter($record)))
+		{
+			foreach ($record as $recordKey => $recordData)
+			{
+				if (array_key_exists($recordKey, $decodeElements))
+				{
+					switch ($decodeElements[$recordKey]->type)
+					{
+						case 'alias' :
+								$correctVal = $this->zapp->string->sluggify($recordData);
+
+								if ($recordData != $correctVal)
+								{
+									$invalidFields[] = $recordKey;
+								}
+							break;
+					}
+				}
+			}
+		}
+
+		return $invalidFields;
 	}
 }
