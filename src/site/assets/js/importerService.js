@@ -101,12 +101,12 @@ var importerService = {
 			return batchDetails;
 		},
 
-	saveTempRecords : function(records, batchDetails)
+	saveTempRecords : function(records, batchDetails, invalidData = '')
 		{
 			var savedTemp = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data: {records : JSON.stringify(records), batchDetails : JSON.stringify(batchDetails)}
+					data: {records : JSON.stringify(records), batchDetails : JSON.stringify(batchDetails), invalidData :  JSON.stringify(invalidData)}
 				});
 
 			return savedTemp;

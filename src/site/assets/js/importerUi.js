@@ -11,7 +11,22 @@ var importerUi = {
 	batchTempInvalid : [],
 	colName : '',
 	hot : '',
-	postItemSize : 40,
+	initialBtnEvent : '',
+	postItemSize : 5,
+
+	showModalFirst : function (thiss){
+		jQuery('#step-one-model #modal-title-1').text(thiss.getAttribute("modal-title-set"));
+		jQuery('#step-one-model').modal('show');
+		importerUi.initialBtnEvent = thiss.id;
+		importerUi.step1();
+	},
+
+	dismissModal : function (thiss){
+		let eventFor	= '#' + thiss.getAttribute("eventFor");
+		let modalBody	= eventFor + " .modal-body";
+		jQuery(modalBody).html("");
+		jQuery(eventFor).modal('hide');
+	},
 
 	step1 : function()
 	{
@@ -64,13 +79,18 @@ var importerUi = {
 					jQuery("#idTextAreaDiv").remove();
 					jQuery("#step1").append(fieldDropDown);
 
-					let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton', 'fieldButton', 'Submit');
+					let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton btn .btn-success', 'fieldButton', 'Submit');
 					submitButton.on('click', importerUi.submitBatch);
 
-					let idTextArea = importerUi.createTextArea("Record id's", 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
 					jQuery("#step1").append(fieldDropDown);
-					jQuery("#step1").append(idTextArea);
-					jQuery("#step1").append(submitButton);
+
+					if(importerUi.initialBtnEvent == 'edit-data')
+					{
+						let idTextArea = importerUi.createTextArea("Record id's", 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
+						jQuery("#step1").append(idTextArea);
+					}
+
+					jQuery(".modal-footer").append(submitButton);
 
 				}
 			);
@@ -193,7 +213,10 @@ var importerUi = {
 		{
 		    Handsontable.renderers.TextRenderer.apply(this, arguments);
 
-		    if(prop == "title")
+			let invaFields		= JSON.parse(importerUi.batchTempInvalid[row]);
+			var invalidArray	=  Object.keys(invaFields).map(function(k) { return invaFields[k] });
+
+		    if(invalidArray.includes(prop))
 		    {
 		    	td.style.fontWeight = 'bold';
 			    td.style.color = 'red';
@@ -221,9 +244,9 @@ var importerUi = {
 			handontableParams.cells = function (row, col, prop)
 			{
 				var cellProperties = {};
-				if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row] !== null)
+
+				if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row])
 				{
-					console.log("row = " + row + " objlength = " + batchRecordsObj.length);
 					cellProperties.renderer = importerUi.invalidRowRenderer; // uses function directly
 				}
 
@@ -264,8 +287,9 @@ var importerUi = {
 		{
 			let allItems		= importerUi.hot.getSourceData();
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
-			let pgWidth			= ((itemStart + 1) / recordsCount)*(100);
 			let itemsEnd		= importerUi.postItemSize + itemStart;
+
+			let pgWidth			= ((itemStart) / recordsCount)*(100);
 
 			jQuery("#pg-bar").css('width', pgWidth + "%");
 
@@ -295,9 +319,7 @@ var importerUi = {
 					{
 						alert("saved in temp");
 						jQuery("#pg-bar").css('width', "0%");
-						console.log(importerUi.hot.getSourceData());
-
-						importerUi.updateBatch();
+						importerUi.updateBatch(); 
 					}
 					else
 					{
@@ -312,8 +334,6 @@ var importerUi = {
 					}
 				}
 			);
-
-			return;			
 		},
 
 	validateTempRecords : function(event, itemStart)
@@ -321,8 +341,11 @@ var importerUi = {
 			let allItems		= importerUi.hot.getSourceData();
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
-			let pgWidth			= ((itemStart + itemsEnd) / (3*recordsCount))*(100);
 			let checkItems		= allItems.slice(itemStart, itemsEnd);
+
+			let completedItem	= importerUi.postItemSize / 3;
+
+			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
 			jQuery("#pg-bar").css('width', pgWidth + "%");
 
@@ -334,24 +357,38 @@ var importerUi = {
 				}
 			).done(
 				function() {
-				
-					let invalidRec	= jQuery.parseJSON(promise.responseText);
-					
-					if(invalidRec.length)
-					{
-					}
-					else
+
+					let invalidRecObj	= jQuery.parseJSON(promise.responseText);
+					importerUi.updateTempRecords(event, itemStart, invalidRecObj)
+
+				}
+			);
+		},
+
+	updateTempRecords : function(event, itemStart, invalidData)
+		{
+			let recordsCount	= (importerUi.hot.getSourceData()).length;
+			let completedItem	= importerUi.postItemSize * (2/3);
+			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
+
+			jQuery("#pg-bar").css('width', pgWidth + "%");
+
+			let promise		= importerService.saveTempRecords('', '', invalidData);
+
+			promise.fail(
+				function() {
+					alert("something went wrong!")
+				}
+			).done(
+				function() {
+					let updatedStatus	= jQuery.parseJSON(promise.responseText);
+
+					if(updatedStatus)
 					{
 						importerUi.saveTempRecords(event, (itemStart + importerUi.postItemSize));
 					}
 				}
 			);
-
-		},
-
-	updateTempRecords : function(event, itemStart, invalidData)
-		{
-			
 		},
 
 	updateBatch : function()
@@ -363,7 +400,7 @@ var importerUi = {
 				}
 			).done(
 				function() {
-					
+					location.reload();
 				}
 			);
 		},
@@ -457,9 +494,5 @@ jQuery(document).ready(function(){
 		{
 			importerUi.batchId = batchId;
 			importerUi.getBatch();
-		}
-		else
-		{
-			importerUi.step1();
 		}
 	});
