@@ -11,13 +11,13 @@ defined('_JEXEC') or die;
 
 $doc = JFactory::getDocument();
 
-$doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/handsontable.full.css');
-$doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/sweetalert.css');
+$doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/handsontable.full.css');
+$doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/sweetalert.css');
 
 //$doc->addScript(JURI::base().'components/com_osian/js/sweetalert.min.js');
 $doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
-$doc->addScript(JURI::base().'components/com_importer/assets/js/handsontable.full.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/handsontable.full.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 ?>
