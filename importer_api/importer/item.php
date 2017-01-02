@@ -60,17 +60,21 @@ class ImporterApiResourceItem extends ApiResource
 			$importerItemsTotal	= $items_model->getTotal();
 		}
 
-		$tempItems = array();
-		$importerInvalidItems = array();
+		$tempItems				= array();
+		$importerInvalidItems	= array();
+		$importervalidatedItems = array();
 
 		foreach ($importerItems as $id => $item)
 		{
 			$tempItems[$id] = json_decode($item->data);
 			$tempItems[$id]->tempId = $item->id;
 			$importerInvalidItems[] = $item->invalid_columns;
+			$importervalidatedItems[] = $item->validated;
 		}
 
-		$this->plugin->setResponse(array('items' => $tempItems, 'count' => $importerItemsTotal, 'invalid' => $importerInvalidItems));
+		$rtrn = array('items' => $tempItems, 'count' => $importerItemsTotal, 'invalid' => $importerInvalidItems, 'validated' => $importervalidatedItems);
+
+		$this->plugin->setResponse($rtrn);
 	}
 
 	/**
@@ -110,6 +114,8 @@ class ImporterApiResourceItem extends ApiResource
 					$JForm['invalid_columns'] = '';
 				}
 
+				$JForm['validated'] = 1;
+
 				$tempId				= $this->saveTemp($JForm);
 			}
 
@@ -135,6 +141,7 @@ class ImporterApiResourceItem extends ApiResource
 
 				$JForm['batch_id']	= $batch['id'];
 				$JForm['data']		= json_encode($record);
+				$JForm['validated'] = 0;
 
 				$tempId				= $this->saveTemp($JForm);
 				$tempKeys[$index]	= $tempId;
