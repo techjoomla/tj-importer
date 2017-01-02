@@ -103,17 +103,25 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		$records_array['name'][0]['value'] = $value->name;
 		$records_array['alias'][0]['value'] = $value->alias;
 		$recordFinalArray = array();
+		$validKeysArray = array('file', 'value');
 
 		foreach ($records_array as $fieldKey => $fieldValue)
 		{
 			$valueString = '';
 
-			foreach ($fieldValue as $fieldVal)
+			foreach ($fieldValue as $k => $fieldVal)
 			{
-				$keyy	= array_keys($fieldVal);
-				$keyyy	= $keyy[0];
+				if (is_array($fieldVal))
+				{
+					$keyy	= array_keys($fieldVal);
+					$keyyy	= $keyy[0];
 
-				$valueString .= $fieldVal[$keyyy] . "|";
+					$valueString .= $fieldVal[$keyyy] . "|";
+				}
+				elseif (is_int($k) || in_array($k, $validKeysArray))
+				{
+					$valueString .= $fieldVal . "|";
+				}
 			}
 
 			$recordFinalArray[$fieldKey] = trim($valueString, "|");
