@@ -46,7 +46,7 @@ var importerService = {
 			let tempRecords = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data : {batch_id: batchId, offset: itemOffset, limit : 20}
+					data : {batch_id: batchId, offset: itemOffset, limit : 2}
 				});
 
 			return tempRecords;
@@ -121,91 +121,5 @@ var importerService = {
 				});
 
 			return validating;
-			
 		}
 }
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-/*jQuery(document).ready(function(){
-
-	var mainDiv = jQuery("#step1");
-	var clientApp = jQuery("#clientApp").val();
-
-	var getFieldList = function (){
-				var typeSelected = jQuery("option:selected", this).val();
-				jQuery.ajax({
-						url: "/toolsite/index.php?option=com_api&app=importer_" + clientApp + "&resource=clientcolumns&format=raw&type=" + typeSelected,
-						success: function(resultFields)
-						{
-							var columnDropDown = createDropDownList('columnList', 'columnList', resultFields, true);
-							jQuery(".columnList").remove();
-							jQuery("#getrecords").remove();
-
-							mainDiv.append(columnDropDown);
-							mainDiv.append("<textarea id='getrecords'></textarea>");
-						}
-				});
-			};
-
-	var getTypeList = function (clientApp){
-						jQuery.ajax({
-							url: "/toolsite/index.php?option=com_api&app=importer_" + clientApp + "&resource=clienttypes&format=raw",
-							success: function(result)
-							{
-								var typeDropDown = createDropDownList('typeList', 'typeList', result, false);
-								typeDropDown.on('change', getFieldList);
-
-								typeDropDown.on('change', function(){
-									var typeSelected = jQuery("option:selected", this).val();
-									jQuery.ajax({
-											url: "/toolsite/index.php?option=com_api&app=importer_" + clientApp + "&resource=clientcolumns&format=raw&type=" + typeSelected,
-											success: function(resultFields)
-											{
-												var columnDropDown = createDropDownList('columnList', 'columnList', resultFields, true);
-												jQuery(".columnList").remove();
-												jQuery("#getrecords").remove();
-
-												mainDiv.append(columnDropDown);
-												mainDiv.append("<textarea id='getrecords'></textarea>");
-											}
-									});
-								});
-
-								mainDiv.append(typeDropDown);
-							}
-						});
-					};
-
-	var createDropDownList = function (classs, id, optionList, multiplee=false){
-							var combo = jQuery("<select></select>").attr("id", id).attr("class", classs);
-							if(multiplee)
-							{
-								combo.attr("multiple", "multiple");
-							}
-
-							combo.append("<option>Select</option>");
-
-							jQuery.each(optionList, function (i, el) {
-
-								if(typeof(el) == 'object')
-									el = el.name;
-
-								combo.append("<option value='" + i + "'>" + el + "</option>");
-							});
-
-							return combo;
-						}
-	
-	var typeList	= new getTypeList(clientApp);
-});
-*/

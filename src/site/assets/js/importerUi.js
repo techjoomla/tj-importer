@@ -9,9 +9,12 @@ var importerUi = {
 	colProperties : '',
 	batchTempRecords : [],
 	batchTempInvalid : [],
+	validateTempItems :[],
+	checkTempItems :[],
 	colName : '',
 	hot : '',
 	initialBtnEvent : '',
+	textColorNew : false,
 	postItemSize : 5,
 
 	showModalFirst : function (thiss){
@@ -194,6 +197,8 @@ var importerUi = {
 
 					importerUi.batchTempRecords = importerUi.batchTempRecords.concat(batchRecordsObj.items);
 					importerUi.batchTempInvalid = importerUi.batchTempInvalid.concat(batchRecordsObj.invalid);
+					importerUi.validateTempItems = importerUi.validateTempItems.concat(batchRecordsObj.validated);
+					importerUi.checkTempItems = importerUi.checkTempItems.concat(batchRecordsObj.validated);
 
 					if(importerUi.batchTempRecords.length <  batchRecordsObj.count)
 					{
@@ -213,16 +218,30 @@ var importerUi = {
 		{
 		    Handsontable.renderers.TextRenderer.apply(this, arguments);
 
-			let invaFields		= JSON.parse(importerUi.batchTempInvalid[row]);
-			var invalidArray	=  Object.keys(invaFields).map(function(k) { return invaFields[k] });
+			if(importerUi.batchTempInvalid[row]){
+				let invaFields		= JSON.parse(importerUi.batchTempInvalid[row]);
+				var invalidArray	=  Object.keys(invaFields).map(function(k) { return invaFields[k] });
+				
+				if(invalidArray.includes(prop))
+				{
+					td.style.fontWeight = 'bold';
+					td.style.color = 'red';
 
-		    if(invalidArray.includes(prop))
-		    {
-		    	td.style.fontWeight = 'bold';
-			    td.style.color = 'red';
-		    }
+					/*
+					Below code not working as expected, so commented..
+					var instanceAction = instance.undoRedo;
+					if(instanceAction){
+						var checkkkk = instanceAction.doneActions[0];
+						if((checkkkk && checkkkk.actionType == "change") || importerUi.checkTempItems[row] == 0){
+								td.style.color = 'blue';
+						}
+					}
+					*/
 
-		    td.style.background = '#CEC';
+				}
+
+				td.style.background = '#CEC';
+			}
 		},
 
 	loadHandsonView : function(batchColumnsObj, batchRecordsObj='')
@@ -245,8 +264,7 @@ var importerUi = {
 			{
 				var cellProperties = {};
 
-				if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row])
-				{
+				if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row]){
 					cellProperties.renderer = importerUi.invalidRowRenderer; // uses function directly
 				}
 
@@ -259,7 +277,14 @@ var importerUi = {
 
 			importerUi.hot.updateSettings({
 					afterChange: function(changes, source) {
-							console.log("changed");
+							//console.log(importerUi.hot.tr[0]);
+							importerUi.checkTempItems = [];
+							for(i = 0; i < changes.length; i++){
+								if(changes[i][2] != changes[i][3]){
+									document.getElementById("import-btn").disabled = true;
+								}
+							}
+							
 						}
 					});
 
@@ -272,11 +297,35 @@ var importerUi = {
 			let backButton = importerUi.createButton('JForm["back"]', 'back pull-right', 'back', 'Cancel');
 			backButton.on('click', importerUi.goFirst);
 
+			let importButton = importerUi.createButton('JForm["import"]', 'import', 'import-btn', 'Import');
+			//backButton.on('click', importerUi.goFirst);
+
 			jQuery("#importer-buttons-container").append(saveTempButton);
 			jQuery("#importer-buttons-container").append(validateButton);
+			jQuery("#importer-buttons-container").append(importButton);
 			jQuery("#importer-buttons-container").append(backButton);
 
+			let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
+			//let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
+			let filteredValidated	= importerUi.validateTempItems.filter(importerUi.checkEmptyArray);
+
+			if(importerUi.batchTempInvalid.length && (filteredInvalid.length == 0) && (filteredValidated.length == 0)){
+				document.getElementById("import-btn").disabled = false;
+			}else{
+				document.getElementById("import-btn").disabled = true;
+			}
 		},
+
+	checkEmptyArray : function (value) {
+				if(parseInt(value) == value)
+				{
+					return value == 0;
+				}
+				else
+				{
+					return value != '';
+				}
+			},
 
 	goFirst : function()
 		{
@@ -311,7 +360,6 @@ var importerUi = {
 						if(tempIds[i] !== null)
 						{
 							importerUi.hot.getSourceData()[itemStart + i].tempId = tempIds[i];
-							console.log("temp ids - " + tempIds[i]);
 						}
 					}
 
@@ -319,7 +367,7 @@ var importerUi = {
 					{
 						alert("saved in temp");
 						jQuery("#pg-bar").css('width', "0%");
-						importerUi.updateBatch(); 
+						importerUi.updateBatch(event.target.id); 
 					}
 					else
 					{
@@ -359,6 +407,22 @@ var importerUi = {
 				function() {
 
 					let invalidRecObj	= jQuery.parseJSON(promise.responseText);
+					let chekcingArray	= [];
+					let arrayChk		= jQuery.map(invalidRecObj, function(value, index) {return [value];});
+
+					for (i = 0; i < arrayChk.length; i++){
+						if(arrayChk[i]){
+							chekcingArray.push(JSON.stringify(jQuery.extend({}, arrayChk[i])));
+						}else{
+							chekcingArray.push("");
+						}
+					}
+
+					if(itemStart == 0){
+						importerUi.batchTempInvalid = [];
+					}
+
+					importerUi.batchTempInvalid = importerUi.batchTempInvalid.concat(chekcingArray)
 					importerUi.updateTempRecords(event, itemStart, invalidRecObj)
 
 				}
@@ -391,7 +455,7 @@ var importerUi = {
 			);
 		},
 
-	updateBatch : function()
+	updateBatch : function(event)
 		{
 			let promise = importerService.updateBatch(importerUi.batchDetails);
 			promise.fail(
@@ -400,7 +464,16 @@ var importerUi = {
 				}
 			).done(
 				function() {
-					location.reload();
+					importerUi.hot.render();
+
+						//location.reload();
+						let filteredInvalid = importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
+
+						if(importerUi.batchTempInvalid.length && filteredInvalid.length == 0 && event == 'validate'){
+							document.getElementById("import-btn").disabled = false;
+						}else{
+							document.getElementById("import-btn").disabled = true;
+						}
 				}
 			);
 		},
