@@ -72,9 +72,7 @@ class ImporterApiResourceItem extends ApiResource
 			$importervalidatedItems[] = $item->validated;
 		}
 
-		$rtrn = array('items' => $tempItems, 'count' => $importerItemsTotal, 'invalid' => $importerInvalidItems, 'validated' => $importervalidatedItems);
-
-		$this->plugin->setResponse($rtrn);
+		$this->plugin->setResponse(array('items' => $tempItems, 'count' => $importerItemsTotal, 'invalid' => $importerInvalidItems, 'validated' => $importervalidatedItems));
 	}
 
 	/**
@@ -94,7 +92,8 @@ class ImporterApiResourceItem extends ApiResource
 		$records	= (array) json_decode($jinput->get('records', '', 'STRING'));
 		$batch		= (array) json_decode($jinput->get('batchDetails', '', 'STRING'));
 
-		$invalidDataStr		= $jinput->get('invalidData', '', 'STRING');
+		$invalidDataStr			= $jinput->get('invalidData', '', 'STRING');
+		$importedRecStatus		= $jinput->get('imported', false, 'BOOLEAN');
 
 		if (trim($invalidDataStr, '"'))
 		{
@@ -137,6 +136,16 @@ class ImporterApiResourceItem extends ApiResource
 				if (isset($record['recordid']))
 				{
 					$JForm['content_id']	= $record['recordid'];
+				}
+
+				if($importedRecStatus === true)
+				{
+					$JForm['imported']	= 1;
+					$JForm['validated']	= 1;
+				}
+				else
+				{
+					$JForm['imported']	= 0;
 				}
 
 				$JForm['batch_id']	= $batch['id'];
