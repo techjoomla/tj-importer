@@ -54,15 +54,15 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 
 		foreach ($this->records as $record)
 		{
-			if (empty(array_filter( (array) $record)))
+			if (empty(array_filter((array) $record)))
 			{
 				continue;
 			}
 
 			if ($record->recordid)
 			{
-				$this->updateRec($record);
 				// Edit function call
+				$this->updateRec($record);
 			}
 			else
 			{
@@ -122,7 +122,6 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 	 **/
 	public function updateRec($record)
 	{
-		//$item 	= $this->zapp->object->create('Item');
 		$item	= $this->zapp->table->item->get($record->recordid);
 
 		$item->name		= $record->name;

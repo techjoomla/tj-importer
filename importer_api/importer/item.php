@@ -72,7 +72,13 @@ class ImporterApiResourceItem extends ApiResource
 			$importervalidatedItems[] = $item->validated;
 		}
 
-		$this->plugin->setResponse(array('items' => $tempItems, 'count' => $importerItemsTotal, 'invalid' => $importerInvalidItems, 'validated' => $importervalidatedItems));
+		$finReturn = array(	'items' => $tempItems,
+							'count' => $importerItemsTotal,
+							'invalid' => $importerInvalidItems,
+							'validated' => $importervalidatedItems
+						);
+
+		$this->plugin->setResponse($finReturn);
 	}
 
 	/**
@@ -138,7 +144,7 @@ class ImporterApiResourceItem extends ApiResource
 					$JForm['content_id']	= $record['recordid'];
 				}
 
-				if($importedRecStatus === true)
+				if ($importedRecStatus === true)
 				{
 					$JForm['imported']	= 1;
 					$JForm['validated']	= 1;
