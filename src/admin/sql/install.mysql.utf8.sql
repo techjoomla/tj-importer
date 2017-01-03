@@ -13,7 +13,6 @@ CREATE TABLE `#__importer_batches` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=37 ;
 
-
 CREATE TABLE IF NOT EXISTS `#__importer_items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `batch_id` int(11) NOT NULL,

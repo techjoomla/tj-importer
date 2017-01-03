@@ -101,12 +101,17 @@ var importerService = {
 			return batchDetails;
 		},
 
-	saveTempRecords : function(records, batchDetails, invalidData = '')
+	saveTempRecords : function(records, batchDetails, invalidData = '', imported = 0)
 		{
 			var savedTemp = jQuery.ajax({
-					type: "POST",
-					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data: {records : JSON.stringify(records), batchDetails : JSON.stringify(batchDetails), invalidData :  JSON.stringify(invalidData)}
+					type	: "POST",
+					url		: "index.php?option=com_api&app=importer&resource=item&format=raw",
+					data	:{
+								records : JSON.stringify(records),
+								batchDetails : JSON.stringify(batchDetails),
+								invalidData :  JSON.stringify(invalidData),
+								imported	: imported
+							}
 				});
 
 			return savedTemp;
@@ -121,5 +126,16 @@ var importerService = {
 				});
 
 			return validating;
+		},
+
+	importTempRecords : function(checkItems, batchDetails)
+		{
+			var importStatus  = jQuery.ajax({
+					type: "POST",
+					url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientimport&format=raw",
+					data: {records : JSON.stringify(checkItems), batchDetails : JSON.stringify(batchDetails)}
+				});
+
+			return importStatus;
 		}
-}
+};
