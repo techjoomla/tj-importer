@@ -204,12 +204,14 @@ var importerUi = {
 			if(importerUi.batchTempInvalid[row]){
 				let invaFields		= JSON.parse(importerUi.batchTempInvalid[row]);
 				var invalidArray	=  Object.keys(invaFields).map(function(k) { return invaFields[k] });
-				
+
+				td.style.background = '#CEC';
+
 				if(invalidArray.includes(prop))
-				{
+				{	
 					td.style.fontWeight = 'bold';
 					td.style.color = 'red';
-
+					td.style.background = '#faa1a1';
 					/*
 					Below code not working as expected, so commented..
 					var instanceAction = instance.undoRedo;
@@ -223,7 +225,6 @@ var importerUi = {
 
 				}
 
-				td.style.background = '#CEC';
 			}
 		},
 
@@ -318,6 +319,8 @@ var importerUi = {
 			{
 				importerUi.hot.render();
 				alert("done everything");
+				jQuery("#pg-bar").css('width', "0");
+				//location.reload();
 				return;
 			}
 
@@ -411,6 +414,7 @@ var importerUi = {
 
 	validateTempRecords : function(event, itemStart){
 			let allItems		= importerUi.hot.getSourceData();
+
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let checkItems		= allItems.slice(itemStart, itemsEnd);
