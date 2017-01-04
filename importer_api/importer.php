@@ -31,11 +31,5 @@ class PlgAPIImporter extends ApiPlugin
 		parent::__construct($subject = 'api', $config = array());
 
 		ApiResource::addIncludePath(dirname(__FILE__) . '/importer');
-
-		// Set the login resource to be public
-		$this->setResourceAccess('item', 'public', 'get');
-		$this->setResourceAccess('item', 'public', 'post');
-		$this->setResourceAccess('batch', 'public', 'get');
-		$this->setResourceAccess('batch', 'public', 'post');
 	}
 }

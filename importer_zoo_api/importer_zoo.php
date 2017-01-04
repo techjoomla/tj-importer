@@ -31,13 +31,5 @@ class PlgAPIImporter_Zoo extends ApiPlugin
 		parent::__construct($subject = 'api', $config = array());
 
 		ApiResource::addIncludePath(dirname(__FILE__) . '/importer_zoo');
-
-		// Set the login resource to be public
-		$this->setResourceAccess('clienttypes', 'public', 'get');
-		$this->setResourceAccess('clientcolumns', 'public', 'get');
-		$this->setResourceAccess('clientrecords', 'public', 'get');
-		$this->setResourceAccess('clientvalidate', 'public', 'post');
-		$this->setResourceAccess('clientimport', 'public', 'get');
-		$this->setResourceAccess('clientimport', 'public', 'post');
 	}
 }

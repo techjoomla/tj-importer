@@ -81,6 +81,11 @@ class ImporterApiResourceBatch extends ApiResource
 		if (isset($formData['id']))
 		{
 			$formData['start_id'] = null;
+			$formData['updated_date'] = date('Y-m-d H:i:s');
+		}
+		else
+		{
+			$formData['created_date'] = date('Y-m-d H:i:s');
 		}
 
 		$formData['start_id'] = trim(str_replace("\n", ",", $formData['start_id']), ",");
