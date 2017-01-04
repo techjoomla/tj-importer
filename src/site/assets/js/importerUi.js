@@ -93,13 +93,12 @@ var importerUi = {
 		},
 
 	submitBatch : function(){
-			let batchName = jQuery("#batchName").val();
-			let typeSelected = jQuery("select#typeList").val();
-			let fieldsSelected = jQuery("select#fieldList").val();
+			let batchName		= jQuery("#batchName").val();
+			let typeSelected	= jQuery("select#typeList").val();
+			let fieldsSelected	= jQuery("select#fieldList").val();
 			let recordsSelected = jQuery("#idTextArea").val();
 
 			let batchParams	= {
-					batchName:batchName,
 					type:typeSelected, 
 					columns:jQuery.extend({}, fieldsSelected)
 				};
@@ -307,19 +306,45 @@ var importerUi = {
 			window.location = "index.php?option=com_importer&view=importer&clientapp=" + importerUi.batchDetails.client;
 		},
 
+	showProgress : function(text, percentage){
+
+			let showPercent = (percentage > 100) ? 100 : Math.round(percentage * 100) / 100;
+
+			jQuery("#progress-text").text(text + " " + showPercent + "% done");
+			jQuery("#pg-bar").css('width', showPercent + "%");
+
+			if(!(jQuery("#fade-div").hasClass("fadded")))
+			{
+				jQuery("#fade-div").addClass("fadded");
+			}
+
+			if(jQuery("#progress-text").hasClass("text-hide"))
+			{
+				jQuery("#progress-text").toggleClass("text-hide text-show");
+			}
+		},
+
+	doneProgress : function(text)
+		{
+			jQuery("#pg-bar").css('width', "0");
+			jQuery("#fade-div").removeClass("fadded");
+			jQuery("#progress-text").toggleClass("text-hide text-show");
+		},
+
 	importTempRecords : function (event, itemStart=0){
 			let allItems		= importerUi.hot.getSourceData();
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let pgWidth			= ((itemStart) / recordsCount)*(100);
 
-			jQuery("#pg-bar").css('width', pgWidth + "%");
+			importerUi.showProgress('Importing records...', pgWidth);
 
 			if(itemStart >= recordsCount)
 			{
 				importerUi.hot.render();
 				alert("done everything");
-				jQuery("#pg-bar").css('width', "0");
+				//jQuery("#pg-bar").css('width', "0");
+				importerUi.doneProgress('');
 				//location.reload();
 				return;
 			}
@@ -352,7 +377,8 @@ var importerUi = {
 			let completedItem	= importerUi.postItemSize / 2;
 			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
-			jQuery("#pg-bar").css('width', pgWidth + "%");
+			//jQuery("#pg-bar").css('width', pgWidth + "%");
+			importerUi.showProgress('Importing records....', pgWidth);
 
 			let promise		= importerService.saveTempRecords(importedRecDetails, importerUi.batchDetails, '', true);
 
@@ -376,8 +402,15 @@ var importerUi = {
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let pgWidth			= ((itemStart) / recordsCount)*(100);
+			var pgText			= 'Saving into temp table...';
 
-			jQuery("#pg-bar").css('width', pgWidth + "%");
+			//jQuery("#pg-bar").css('width', pgWidth + "%");
+			if(event.target.id === 'validate')
+			{
+				pgText			= 'Validating records...';
+			}
+			
+			importerUi.showProgress(pgText, pgWidth);
 
 			let checkItems	= allItems.slice(itemStart, itemsEnd);
 			let promise		= importerService.saveTempRecords(checkItems, importerUi.batchDetails);
@@ -399,7 +432,8 @@ var importerUi = {
 
 					if (itemStart >= recordsCount){
 						alert("saved in temp");
-						jQuery("#pg-bar").css('width', "0%");
+						//jQuery("#pg-bar").css('width', "0%");
+						importerUi.doneProgress('');
 						importerUi.updateBatch(event.target.id); 
 					}else{
 						if(event.target.id === 'validate'){
@@ -423,7 +457,8 @@ var importerUi = {
 
 			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
-			jQuery("#pg-bar").css('width', pgWidth + "%");
+			//jQuery("#pg-bar").css('width', pgWidth + "%");
+			importerUi.showProgress('Validating records..', pgWidth);
 
 			let promise = importerService.validateRecords(checkItems, importerUi.batchDetails);
 
@@ -460,7 +495,15 @@ var importerUi = {
 			let completedItem	= importerUi.postItemSize * (2/3);
 			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
-			jQuery("#pg-bar").css('width', pgWidth + "%");
+			var pgText			= 'Saving into temp table...';
+
+			//jQuery("#pg-bar").css('width', pgWidth + "%");
+			if(event.target.id === 'validate')
+			{
+				pgText			= 'Validating records...';
+			}
+			
+			importerUi.showProgress(pgText, pgWidth);
 
 			let promise		= importerService.saveTempRecords('', '', invalidData);
 

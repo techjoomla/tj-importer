@@ -28,9 +28,12 @@ class ImporterViewImporter extends JViewLegacy
 	public function display($tpl = null)
 	{
 		$jinput  = JFactory::getApplication()->input;
+		$user = JFactory::getUser();
 
-		$this->clientApp = $jinput->get('clientapp', '', 'STRING');
-		$this->batchId = $jinput->get('batch_id', '', 'INT');
+		$this->clientApp	= $jinput->get('clientapp', '', 'STRING');
+		$this->batchId		= $jinput->get('batch_id', '', 'INT');
+		$this->userId		= $user->id;
+		$this->userName		= $user->name;
 
 		parent::display();
 	}

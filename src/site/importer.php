@@ -10,7 +10,16 @@
 // No direct access
 defined('_JEXEC') or die;
 
-// Execute the task.
-$controller = JControllerLegacy::getInstance('Importer');
-$controller->execute(JFactory::getApplication()->input->getCmd('task', 'display', 'STRING'));
-$controller->redirect();
+$user = JFactory::getUser();
+
+if ($user->guest)
+{
+	echo "<p>You must login to see the content.</p>";
+}
+else
+{
+	// Execute the task.
+	$controller = JControllerLegacy::getInstance('Importer');
+	$controller->execute(JFactory::getApplication()->input->getCmd('task', 'display', 'STRING'));
+	$controller->redirect();
+}

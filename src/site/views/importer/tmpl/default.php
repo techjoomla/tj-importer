@@ -26,15 +26,23 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 
 <div>
 	<input id='clientApp' type="hidden" value="<?php echo $this->clientApp; ?>">
+	<input id='userId' type="hidden" value="<?php echo $this->userId; ?>">
+	<input id='userName' type="hidden" value="<?php echo $this->userName; ?>">
 
+	<div>
+		<h3>Welcome <i><?php echo $this->userName; ?>..!</i></h3>
+		<p>What would you like to do today?</p>
+		<br/>
+	</div>
 	
 	<div>
-	  <button type="button" id="add-data" class="btn demo-btns btn-secondary" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to add records">Add Data</button>
-	  <button type="button" id="edit-data" class="btn demo-btns btn-secondary" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to edit records">Edit Data</button>
-	  <button type="button" id="load-batch" class="btn demo-btns btn-secondary" data-toggle="modal" data-target="#myViewModal" >Load Batch</button>
-	  <button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Delete Data</button>
-	  <button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Export Data</button>
-	  <button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Edit Data</button>
+		<button id="add-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to add records">Add Data</button>
+		<button id="edit-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to edit records">Edit Data</button>
+
+		<button type="button" id="load-batch" class="btn demo-btns btn-secondary" data-toggle="modal" data-target="#myViewModal" >Load Batch</button>
+		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Delete Data</button>
+		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Export Data</button>
+		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Edit Data</button>
 	</div>
 
 	<div class="modal fade" id="step-one-model" role="dialog" data-backdrop="static" data-keyboard="false" style="display:none;">

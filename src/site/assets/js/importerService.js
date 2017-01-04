@@ -11,7 +11,8 @@ var importerService = {
 			var	clientApp	= this.clientApp;
 			var clientTypes	= jQuery.ajax({
 						type: "GET",
-						url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clienttypes&format=raw"
+						url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clienttypes&format=raw",
+						headers: {'x-auth':'session'}
 					});
 			return clientTypes;
 		},
@@ -22,7 +23,8 @@ var importerService = {
 			var clientColumns = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientcolumns&format=raw&type=" + typeSelected,
-					data : {fields : fieldSelected}
+					data : {fields : fieldSelected},
+					headers: {'x-auth':'session'}
 				});
 			
 			return clientColumns;
@@ -35,7 +37,8 @@ var importerService = {
 			var clientRecords = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer_" + clientApp + "&resource=clientrecords&format=raw",
-					data : {type: type, fields : columns, ids : ids}
+					data : {type: type, fields : columns, ids : ids},
+					headers: {'x-auth':'session'}
 				});
 
 			return clientRecords;
@@ -46,7 +49,8 @@ var importerService = {
 			let tempRecords = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data : {batch_id: batchId, offset: itemOffset, limit : 2}
+					data : {batch_id: batchId, offset: itemOffset, limit : 2},
+					headers: {'x-auth':'session'}
 				});
 
 			return tempRecords;
@@ -60,20 +64,23 @@ var importerService = {
 			var import_status	= 0;
 			var created_date	= '';
 			var updated_date	= '';
-			var import_user		= 1234;	
+			var import_user		= document.getElementById("userId").value;	
 			var params			= batchParams;
 			var start_id		= '';
 
-			var saveResult = jQuery.post( 
-								"index.php?option=com_api&app=importer&resource=batch&format=raw", 
-								{ 'JForm': {
+			var saveResult = jQuery.ajax({
+								type : "POST",
+								url : "index.php?option=com_api&app=importer&resource=batch&format=raw", 
+								data: { 'JForm': {
 											batch_name : batch_name, 
 											client : client, 
 											params : JSON.stringify(params),
-											start_id : recordsSelected
+											start_id : recordsSelected,
+											import_user : import_user
 										}
-								}
-							);
+									},
+								headers: {'x-auth':'session'}
+							});
 
 			console.log(saveResult);
 			return saveResult;
@@ -84,7 +91,8 @@ var importerService = {
 			var batchUpdated = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer&resource=batch&format=raw",
-					data: {JForm:batchDetails}
+					data: {JForm:batchDetails},
+					headers: {'x-auth':'session'}
 				});
 			
 			return batchUpdated;
@@ -95,7 +103,8 @@ var importerService = {
 			var batchDetails = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=batch&format=raw",
-					data: {id:batchId}
+					data: {id:batchId},
+					headers: {'x-auth':'session'}
 				});
 			
 			return batchDetails;
@@ -111,7 +120,8 @@ var importerService = {
 								batchDetails : JSON.stringify(batchDetails),
 								invalidData :  JSON.stringify(invalidData),
 								imported	: imported
-							}
+							},
+					headers: {'x-auth':'session'}
 				});
 
 			return savedTemp;
@@ -122,7 +132,8 @@ var importerService = {
 			var validating  = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientvalidate&format=raw",
-					data: {records : JSON.stringify(checkItems), batchDetails : JSON.stringify(batchDetails)}
+					data: {records : JSON.stringify(checkItems), batchDetails : JSON.stringify(batchDetails)},
+					headers: {'x-auth':'session'}
 				});
 
 			return validating;
@@ -133,7 +144,8 @@ var importerService = {
 			var importStatus  = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientimport&format=raw",
-					data: {records : JSON.stringify(checkItems), batchDetails : JSON.stringify(batchDetails)}
+					data: {records : JSON.stringify(checkItems), batchDetails : JSON.stringify(batchDetails)},
+					headers: {'x-auth':'session'}
 				});
 
 			return importStatus;
