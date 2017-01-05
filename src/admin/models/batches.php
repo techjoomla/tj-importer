@@ -53,9 +53,16 @@ class ImporterModelBatches extends JModelList
 		$query->select('*')
 			->from($db->quoteName('#__importer_batches'));
 
+		if ($clientApp = $this->getState('filter.client'))
+		{
+			$query->where("client =   '{$clientApp}'");
+		}
+
 		// Add the list ordering clause.
 		$orderCol	= $this->state->get('list.ordering', 'id');
-		$orderDirn 	= $this->state->get('list.direction', 'asc');
+		$orderDirn 	= $this->state->get('list.direction', 'desc');
+
+		$this->setState('list.limit', 100);
 
 		$query->order($db->escape($orderCol) . ' ' . $db->escape($orderDirn));
 

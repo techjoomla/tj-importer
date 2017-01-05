@@ -7,7 +7,7 @@ CREATE TABLE `#__importer_batches` (
   `import_status` varchar(250) NOT NULL,
   `created_date` datetime NOT NULL,
   `updated_date` datetime NOT NULL,
-  `import_user` int(10) NOT NULL,
+  `created_user` int(10) NOT NULL,
   `params` TEXT NOT NULL,
   `start_id` TEXT NOT NULL,
   PRIMARY KEY (`id`)

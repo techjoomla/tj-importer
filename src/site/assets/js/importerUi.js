@@ -18,17 +18,86 @@ var importerUi = {
 	validateTempItems :[],
 
 	showModalFirst : function (thiss){
-		jQuery('#step-one-model #modal-title-1').text(thiss.getAttribute("modal-title-set"));
-		jQuery('#step-one-model').modal('show');
-		importerUi.initialBtnEvent = thiss.id;
-		importerUi.step1();
+		
+		console.log(thiss);
+		if(thiss.id == 'load-batch')
+		{
+			jQuery('#load-batch-model').modal('show');
+			importerUi.initialBtnEvent = thiss.id;
+			importerUi.getBatchesList(document.getElementById('clientApp').value);
+		}
+		else
+		{
+			jQuery('#step-one-model #modal-title-1').text(thiss.getAttribute("modal-title-set"));
+			jQuery('#step-one-model').modal('show');
+			importerUi.initialBtnEvent = thiss.id;
+			importerUi.step1();
+		}
 	},
 
 	dismissModal : function (thiss){
 		let eventFor	= '#' + thiss.getAttribute("eventFor");
 		let modalBody	= eventFor + " .modal-body";
 		jQuery(modalBody).html("");
+		jQuery("#fieldButton").remove();
 		jQuery(eventFor).modal('hide');
+	},
+
+	getBatchesList : function(clientApp)
+	{
+		let promise = importerService.getBatchesList(clientApp);
+
+		promise.fail(
+			function() {
+				alert('somethig went wrong');
+			}
+		).done(
+			function() {
+				let batchesInfo	= jQuery.parseJSON(promise.responseText);
+
+				console.log(batchesInfo);
+
+				importerUi.showBatchesList(batchesInfo);
+
+				return;
+			}
+		);
+	},
+	
+	showBatchesList : function (batchesInfo)
+	{
+		var batchesHtml = jQuery("<div></div>").attr("id", "batches-div");
+
+		if(batchesInfo.totalBatches)
+		{
+			var dynamicTr	= '<tr><th>Batch Name</th><th>Created date</th><th>Updated date</th><th>Created User</th></tr>';
+
+			for(i=0; i < batchesInfo.batches.length; i++)
+			{
+				dynamicTr += '<tr>';
+				let batchLink = 'index.php?option=com_importer&view=importer&layout=handson&batch_id=' + batchesInfo.batches[i].id;
+				let	batchName = (batchesInfo.batches[i].batch_name) ? batchesInfo.batches[i].batch_name : 'Unnamed';
+				dynamicTr += '<td><a href=' + batchLink + '>' + batchName + '</a></td>';
+				dynamicTr += '<td>' + batchesInfo.batches[i].created_date + '</td>';
+				dynamicTr += '<td>' + batchesInfo.batches[i].updated_date + '</td>';
+				dynamicTr += '<td>' + batchesInfo.batches[i].created_user + '</td>';
+				dynamicTr += '</tr>';
+				console.log(batchName);
+			}
+
+			var batchesTable 	= "<table class='batches-table'>" + dynamicTr + "</table>";
+			var infoDiv			= "<p> Total batches for <b>" + document.getElementById('clientApp').value + "</b> are <b>" + batchesInfo.totalBatches + "</b></p>";
+
+			jQuery('#load-batch-content').append(infoDiv);
+			jQuery('#load-batch-content').append(batchesTable);
+		}
+		else
+		{
+			var infoDiv			= "<h3> No batch found for " + document.getElementById('clientApp').value + "</h3>";
+
+			jQuery('#load-batch-content').append(infoDiv);
+		}
+
 	},
 
 	step1 : function(){
@@ -87,7 +156,7 @@ var importerUi = {
 						jQuery("#step1").append(idTextArea);
 					}
 
-					jQuery(".modal-footer").append(submitButton);
+					jQuery("#modal-footer-1").append(submitButton);
 				}
 			);
 		},
@@ -103,7 +172,7 @@ var importerUi = {
 					columns:jQuery.extend({}, fieldsSelected)
 				};
             
-			let promise = importerService.saveBatch(batchParams, recordsSelected);
+			let promise = importerService.saveBatch(batchParams, recordsSelected, batchName);
 
 			promise.fail(
 				function() {

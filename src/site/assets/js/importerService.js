@@ -17,6 +17,15 @@ var importerService = {
 			return clientTypes;
 		},
 
+	getBatchesList : function(clientApp){
+			var batchesList	= jQuery.ajax({
+						type: "GET",
+						url: "index.php?option=com_api&app=importer&resource=batches&format=raw&clientapp=" + clientApp,
+						headers: {'x-auth':'session'}
+					});
+			return batchesList;
+		},
+
 	getFieldList : function (typeSelected, fieldSelected = ''){
 			var	clientApp	=  this.clientApp ;
 
@@ -56,15 +65,15 @@ var importerService = {
 			return tempRecords;
 		},
 
-	saveBatch : function(batchParams, recordsSelected)
+	saveBatch : function(batchParams, recordsSelected, batchName = '')
 		{
 			var	clientApp		= this.clientApp;
-			var batch_name		= batchParams.batchName;
+			var batch_name		= batchName;
 			var client			= clientApp;
 			var import_status	= 0;
 			var created_date	= '';
 			var updated_date	= '';
-			var import_user		= document.getElementById("userId").value;	
+			var created_user		= document.getElementById("userId").value;	
 			var params			= batchParams;
 			var start_id		= '';
 
@@ -76,7 +85,7 @@ var importerService = {
 											client : client, 
 											params : JSON.stringify(params),
 											start_id : recordsSelected,
-											import_user : import_user
+											created_user : created_user
 										}
 									},
 								headers: {'x-auth':'session'}
