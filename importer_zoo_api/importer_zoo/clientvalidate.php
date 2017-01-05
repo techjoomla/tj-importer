@@ -88,12 +88,6 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	 **/
 	public function validate($record, $decodeElements)
 	{
-		
-					echo "<pre>";
-					print_r($decodeElements);
-					die("I am hererer");
-
-
 		$invalidFields = null;
 
 		if (!empty(array_filter($record)))
@@ -113,10 +107,10 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 								}
 							break;
 						case 'relateditemspro' :
-								
+
 							break;
 						case 'date' :
-							
+
 							break;
 					}
 				}
