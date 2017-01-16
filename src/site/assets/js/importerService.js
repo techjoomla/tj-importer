@@ -44,7 +44,7 @@ var importerService = {
 			var	clientApp	=  this.clientApp ;
 
 			var clientRecords = jQuery.ajax({
-					type: "GET",
+					type: "POST",
 					url: "index.php?option=com_api&app=importer_" + clientApp + "&resource=clientrecords&format=raw",
 					data : {type: type, fields : columns, ids : ids},
 					headers: {'x-auth':'session'}
@@ -59,6 +59,18 @@ var importerService = {
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
 					data : {batch_id: batchId, offset: itemOffset, limit : 2},
+					headers: {'x-auth':'session'}
+				});
+
+			return tempRecords;
+		},
+
+	getTempStatus : function(batchId)
+		{
+			let tempRecords = jQuery.ajax({
+					type: "GET",
+					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
+					data : {batch_id: batchId, getStatus : 1},
 					headers: {'x-auth':'session'}
 				});
 

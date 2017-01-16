@@ -1,6 +1,23 @@
-.batches-table th, .batches-table td {
+.batches-table th, .batches-table td
+{
     border-bottom: 1px solid #ddd;
     padding: 7px;
     text-align: centre;
 }
-.batches-table tr:hover {background-color: #f5f5f5}
+
+.batches-table tr:hover
+{
+	background-color: #f5f5f5
+}
+
+label
+{
+	margin-bottom : 0 !important;
+}
+
+div.modal
+{
+	left: 50%;
+    margin-left: -40%;
+    width: 80%;
+}

@@ -21,11 +21,8 @@ class ImporterTableItem extends JTable
 	 *
 	 * @param   JDatabaseDriver  &$db  A database connector object
 	 */
-	function __construct(&$db)
+	public function __construct(&$db)
 	{
-//		$this->setColumnAlias('published', 'state');
 		parent::__construct('#__importer_items', 'id', $db);
 	}
-
-
 }

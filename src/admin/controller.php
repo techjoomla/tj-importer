@@ -18,5 +18,4 @@ jimport('joomla.application.component.controller');
  */
 class ImporterController extends JControllerLegacy
 {
-
 }

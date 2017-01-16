@@ -56,12 +56,31 @@ class ImporterModelItems extends JModelList
 
 		// Filter: like / search
 		$batch_id	= $this->getState('filter.batch_id');
+		$validated	= $this->getState('filter.validated');
+		$imported	= $this->getState('filter.imported');
+		$invalidColumns	= $this->getState('filter.invalid_columns');
 		$offset		= $this->getState('filter.offset') ? $this->getState('filter.offset') : 0;
 		$limit		= $this->getState('filter.limit');
 
 		if ($batch_id)
 		{
 			$query->where('batch_id = ' . (int) $batch_id);
+		}
+
+		if ($validated)
+		{
+			$query->where('validated = 1');
+		}
+
+		if ($imported)
+		{
+			$query->where('imported = 1');
+		}
+
+		if ($invalidColumns)
+		{
+			//invalid_columns IS NOT NULL AND invalid_columns
+			$query->where('invalid_columns != ""');
 		}
 
 		$query->setLimit($limit, $offset);

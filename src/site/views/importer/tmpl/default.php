@@ -21,9 +21,7 @@ $doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/handsontable.full.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
-
 ?>
-
 
 <div>
 	<input id='clientApp' type="hidden" value="<?php echo $this->clientApp; ?>">

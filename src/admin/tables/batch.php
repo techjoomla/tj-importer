@@ -21,7 +21,7 @@ class ImporterTableBatch extends JTable
 	 *
 	 * @param   JDatabaseDriver  &$db  A database connector object
 	 */
-	function __construct(&$db)
+	public function __construct(&$db)
 	{
 		parent::__construct('#__importer_batches', 'id', $db);
 	}

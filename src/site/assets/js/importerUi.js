@@ -232,6 +232,7 @@ var importerUi = {
 			).done(
 				function() {
 					let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
+					importerUi.showProgress('Fetching records from client - ', 100);
 					importerUi.loadHandsonView(batchColumnsObj, batchRecordsObj);
 				}
 			);
@@ -254,10 +255,12 @@ var importerUi = {
 
 					if(importerUi.batchTempRecords.length <  batchRecordsObj.count)
 					{
+						importerUi.showProgress('Fetching records from temp - ', ((importerUi.batchTempRecords.length/batchRecordsObj.count)*100));
 						importerUi.getRecordsTemp(batchDetailsObj, batchColumnsObj, importerUi.batchTempRecords.length);
 					}
 					else
 					{
+						importerUi.showProgress('Fetching records from temp - ', 100);
 						importerUi.loadHandsonView(batchColumnsObj, importerUi.batchTempRecords);
 					}
 
@@ -269,7 +272,8 @@ var importerUi = {
 	invalidRowRenderer : function (instance, td, row, col, prop, value, cellProperties){
 		    Handsontable.renderers.TextRenderer.apply(this, arguments);
 
-			if(importerUi.batchTempInvalid[row]){
+			if(importerUi.batchTempInvalid[row])
+			{
 				let invaFields		= JSON.parse(importerUi.batchTempInvalid[row]);
 				var invalidArray	=  Object.keys(invaFields).map(function(k) { return invaFields[k] });
 
@@ -280,19 +284,7 @@ var importerUi = {
 					td.style.fontWeight = 'bold';
 					td.style.color = 'red';
 					td.style.background = '#faa1a1';
-					/*
-					Below code not working as expected, so commented..
-					var instanceAction = instance.undoRedo;
-					if(instanceAction){
-						var checkkkk = instanceAction.doneActions[0];
-						if((checkkkk && checkkkk.actionType == "change") || importerUi.checkTempItems[row] == 0){
-								td.style.color = 'blue';
-						}
-					}
-					*/
-
 				}
-
 			}
 		},
 
@@ -306,7 +298,28 @@ var importerUi = {
 			handontableParams.stretchH		= 'none';
 			handontableParams.minSpareRows	= 1;
 
-			if(batchRecordsObj){
+			/*
+			 * This loop is to remove 'backslash' from string value
+			*/
+			for(i = 0; i < batchRecordsObj.length; i++ )
+			{
+				let thisBatchRecObj = batchRecordsObj[i];
+
+				batchRecordsObj[i] = jQuery.parseJSON(JSON.stringify(batchRecordsObj[i]));
+
+				//~ for (var property in thisBatchRecObj) {
+					//~ if (thisBatchRecObj.hasOwnProperty(property)) {
+						//~ let value = thisBatchRecObj[property];
+						//~ if(typeof(value) == 'string') {
+							//~ batchRecordsObj[i][property] = value.replace(/\\/g, "");
+							//~ //batchRecordsObj[i][property] = jQuery.parseJSON(value);
+						//~ }
+					//~ }
+				//~ }
+			}
+
+			if(batchRecordsObj)
+			{
 				handontableParams.data	= batchRecordsObj;
 			}
 
@@ -319,6 +332,8 @@ var importerUi = {
 
 				return cellProperties;
 			};
+
+			importerUi.doneProgress("");
 
 			// Below two lines to load handsontable
 			let container	= document.getElementById('example');
@@ -348,9 +363,13 @@ var importerUi = {
 			let importButton = importerUi.createButton('JForm["import"]', 'import', 'import-btn', 'Import');
 			importButton.on('click', importerUi.importTempRecords);
 
+			let batchDetViewBtn = importerUi.createButton('JForm["batchView"]', 'batchView', 'batchView', 'View Batch Details');
+			batchDetViewBtn.on('click', importerUi.viewBaatchStatus);
+
 			jQuery("#importer-buttons-container").append(saveTempButton);
 			jQuery("#importer-buttons-container").append(validateButton);
 			jQuery("#importer-buttons-container").append(importButton);
+			jQuery("#importer-buttons-container").append(batchDetViewBtn);
 			jQuery("#importer-buttons-container").append(backButton);
 
 			let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
@@ -362,6 +381,32 @@ var importerUi = {
 				document.getElementById("import-btn").disabled = true;
 			}
 		},
+
+	viewBaatchStatus : function ()
+	{
+		let tableRecordsCount	= importerUi.hot.countRows() - importerUi.hot.countEmptyRows() ;
+
+		let promise = importerService.getTempStatus(importerUi.batchDetails.id);
+			promise.fail(
+				function() {
+					alert("something went wrong!")
+				}
+			).done(
+				function() {
+					let temDetails	= jQuery.parseJSON(promise.responseText);
+					jQuery('#batchStatus').modal('show');
+					jQuery('#batchStatusTitle').text(importerUi.batchDetails.batch_name);
+					jQuery('#batchStatusBody').append("<ul class='list-group'></ul>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total CSV records - <b>" + tableRecordsCount + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Temp records - <b>" + temDetails.itemsTotal + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Validated records - <b>" + temDetails.validatedTotal + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Invalid records - <b>" + temDetails.invalidTotal + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Imported records - <b>" + temDetails.importedTotal + "</b></li>");
+					console.log(temDetails);
+					
+				}
+			);
+	},
 
 	checkEmptyArray : function (value){
 			if(parseInt(value) == value){
@@ -693,6 +738,7 @@ jQuery(document).ready(function(){
 
 		let batchId = jQuery("#batchId").val();
 		if(batchId){
+			importerUi.showProgress("Fetching records.. Please wait", 1);
 			importerUi.batchId = batchId;
 			importerUi.getBatch();
 		}
