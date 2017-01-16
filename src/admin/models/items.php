@@ -79,7 +79,7 @@ class ImporterModelItems extends JModelList
 
 		if ($invalidColumns)
 		{
-			//invalid_columns IS NOT NULL AND invalid_columns
+			// Invalid_columns IS NOT NULL AND invalid_columns
 			$query->where('invalid_columns != ""');
 		}
 
