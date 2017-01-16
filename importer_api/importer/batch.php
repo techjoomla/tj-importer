@@ -75,17 +75,17 @@ class ImporterApiResourceBatch extends ApiResource
 		$item_model		= JModelLegacy::getInstance('batch', 'ImporterModel');
 
 		$postData 		= $app->input->getArray();
-
 		$formData 		= $postData['JForm'];
+		$currentTime	= new JDate('now');
 
 		if (isset($formData['id']))
 		{
 			$formData['start_id'] = null;
-			$formData['updated_date'] = date('Y-m-d H:i:s');
+			$formData['updated_date'] = $currentTime->__toString();
 		}
 		else
 		{
-			$formData['created_date'] = date('Y-m-d H:i:s');
+			$formData['created_date'] = $currentTime->__toString();
 		}
 
 		$formData['start_id'] = trim(str_replace("\n", ",", $formData['start_id']), ",");

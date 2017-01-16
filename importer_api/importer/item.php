@@ -40,11 +40,12 @@ class ImporterApiResourceItem extends ApiResource
 		$items_model 	= JModelLegacy::getInstance('items', 'ImporterModel');
 
 		$batch_id		= $jinput->get('batch_id', '', 'INT');
+		$callStatus		= $jinput->get('getStatus', 0, 'INT');
 
 		$limit			= $jinput->get('limit', 20, 'INT');
 		$offset			= $jinput->get('offset', 0, 'INT');
 
-		if ( ($batch_id > 0) && ($offset >= 0) && $limit > 0)
+		if ( ($batch_id > 0) && ($offset >= 0) && $limit > 0 && !$callStatus)
 		{
 			$items_model->setState('filter.batch_id', $batch_id);
 			$items_model->setState('filter.limit', $limit);
@@ -52,33 +53,56 @@ class ImporterApiResourceItem extends ApiResource
 
 			$importerItems	= $items_model->getItems();
 			$importerItemsTotal	= $items_model->getTotal();
+
+			$tempItems				= array();
+			$importerInvalidItems	= array();
+			$importervalidatedItems = array();
+
+			foreach ($importerItems as $id => $item)
+			{
+				$tempItems[$id]				= json_decode($item->data);
+				$tempItems[$id]->tempId		= $item->id;
+				$importerInvalidItems[]		= $item->invalid_columns;
+			}
+
+			$finReturn = array(	'items' => $tempItems,
+								'count' => $importerItemsTotal,
+								'invalid' => $importerInvalidItems,
+								'validated' => $importervalidatedItems
+							);
+
+			$this->plugin->setResponse($finReturn);
 		}
 		else
 		{
 			$items_model->setState('filter.batch_id', $batch_id);
 			$importerItems		= $items_model->getItems();
 			$importerItemsTotal	= $items_model->getTotal();
+
+			$itemsModelValidated 	= JModelLegacy::getInstance('items', 'ImporterModel');
+			$itemsModelValidated->setState('filter.batch_id', $batch_id);
+			$itemsModelValidated->setState('filter.validated', 1);
+			$importerItemsValidatedTotal = $itemsModelValidated->getTotal();
+
+			$itemsModelImported 	= JModelLegacy::getInstance('items', 'ImporterModel');
+			$itemsModelImported->setState('filter.batch_id', $batch_id);
+			$itemsModelImported->setState('filter.imported', 1);
+			$importerItemsImportedTotal = $itemsModelImported->getTotal();
+
+			$itemsModelInvalid 	= JModelLegacy::getInstance('items', 'ImporterModel');
+			$itemsModelInvalid->setState('filter.batch_id', $batch_id);
+			$itemsModelInvalid->setState('filter.invalid_columns', 1);
+			$importerItemsInvalidTotal = $itemsModelInvalid->getTotal();
+
+			$statusRtr = array(
+								'itemsTotal' => $importerItemsTotal,
+								'validatedTotal' => $importerItemsValidatedTotal,
+								'importedTotal' => $importerItemsImportedTotal,
+								'invalidTotal' => $importerItemsInvalidTotal
+								);
+
+			$this->plugin->setResponse($statusRtr);
 		}
-
-		$tempItems				= array();
-		$importerInvalidItems	= array();
-		$importervalidatedItems = array();
-
-		foreach ($importerItems as $id => $item)
-		{
-			$tempItems[$id] = json_decode($item->data);
-			$tempItems[$id]->tempId = $item->id;
-			$importerInvalidItems[] = $item->invalid_columns;
-			$importervalidatedItems[] = $item->validated;
-		}
-
-		$finReturn = array(	'items' => $tempItems,
-							'count' => $importerItemsTotal,
-							'invalid' => $importerInvalidItems,
-							'validated' => $importervalidatedItems
-						);
-
-		$this->plugin->setResponse($finReturn);
 	}
 
 	/**
