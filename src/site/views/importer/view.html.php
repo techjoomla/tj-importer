@@ -27,6 +27,30 @@ class ImporterViewImporter extends JViewLegacy
 	 */
 	public function display($tpl = null)
 	{
+		// Add language constant to use in javascript code.
+		JText::script('COM_IMP_TOTAL_BATCHES_FOR');
+		JText::script('COM_IMP_NO_BATCHES_FOR');
+		JText::script('COM_IMP_FETCHING_TEMP_RECORDS');
+		JText::script('COM_IMP_FETCHING_CLT_RECORDS');
+		JText::script('COM_IMP_TOT_CSV_REC');
+		JText::script('COM_IMP_TOT_TMP_REC');
+		JText::script('COM_IMP_TOT_VLD_REC');
+		JText::script('COM_IMP_TOT_INVLD_REC');
+		JText::script('COM_IMP_TOT_IMP_REC');
+		JText::script('COM_IMP_REC_IMPORTED');
+		JText::script('COM_IMP_REC_IMPORTING');
+		JText::script('COM_IMP_REC_SAVING_TEMP');
+		JText::script('COM_IMP_REC_VALIDATING');
+		JText::script('COM_IMP_REC_VALIDATED');
+		JText::script('COM_IMP_REC_SAVED_TEMP');
+
+		JText::script('COM_IMP_BATCHES_TH_NAME');
+		JText::script('COM_IMP_BATCHES_TH_CRE_DATE');
+		JText::script('COM_IMP_BATCHES_TH_MOD_DATE');
+		JText::script('COM_IMP_BATCHES_TH_CRE_USER');
+
+		JText::script('COM_IMP_ERROR_MSG');
+
 		$jinput  = JFactory::getApplication()->input;
 		$user = JFactory::getUser();
 

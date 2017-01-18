@@ -49,7 +49,7 @@ var importerUi = {
 
 		promise.fail(
 			function() {
-				alert('somethig went wrong');
+				alert(Joomla.JText._('COM_IMP_ERROR_MSG'));
 			}
 		).done(
 			function() {
@@ -70,7 +70,12 @@ var importerUi = {
 
 		if(batchesInfo.totalBatches)
 		{
-			var dynamicTr	= '<tr><th>Batch Name</th><th>Created date</th><th>Updated date</th><th>Created User</th></tr>';
+			var dynamicTr	= '<tr>';
+				dynamicTr +=	'<th>' + Joomla.JText._('COM_IMP_BATCHES_TH_NAME') + '</th>';
+				dynamicTr +=	'<th>' + Joomla.JText._('COM_IMP_BATCHES_TH_CRE_DATE') + '</th>';
+				dynamicTr +=	'<th>' + Joomla.JText._('COM_IMP_BATCHES_TH_MOD_DATE') + '</th>';
+				dynamicTr +=	'<th>' + Joomla.JText._('COM_IMP_BATCHES_TH_CRE_USER') + '</th>';
+				dynamicTr += '</tr>';
 
 			for(i=0; i < batchesInfo.batches.length; i++)
 			{
@@ -82,18 +87,18 @@ var importerUi = {
 				dynamicTr += '<td>' + batchesInfo.batches[i].updated_date + '</td>';
 				dynamicTr += '<td>' + batchesInfo.batches[i].created_user + '</td>';
 				dynamicTr += '</tr>';
-				console.log(batchName);
+				//console.log(batchName);
 			}
 
 			var batchesTable 	= "<table class='batches-table'>" + dynamicTr + "</table>";
-			var infoDiv			= "<p> Total batches for <b>" + document.getElementById('clientApp').value + "</b> are <b>" + batchesInfo.totalBatches + "</b></p>";
+			var infoDiv			= "<p>"  + Joomla.JText._('COM_IMP_TOTAL_BATCHES_FOR') + "<b>" + document.getElementById('clientApp').value + "</b> are <b>" + batchesInfo.totalBatches + "</b></p>";
 
 			jQuery('#load-batch-content').append(infoDiv);
 			jQuery('#load-batch-content').append(batchesTable);
 		}
 		else
 		{
-			var infoDiv			= "<h3> No batch found for " + document.getElementById('clientApp').value + "</h3>";
+			var infoDiv			= "<h3>" + Joomla.JText._('COM_IMP_NO_BATCHES_FOR') + document.getElementById('clientApp').value + "</h3>";
 
 			jQuery('#load-batch-content').append(infoDiv);
 		}
@@ -110,7 +115,7 @@ var importerUi = {
 
 		promise.fail(
 			function() {
-				alert('somethig went wrong');
+				alert(Joomla.JText._('COM_IMP_ERROR_MSG'));
 			}
 		).done(
 			function() {
@@ -134,7 +139,7 @@ var importerUi = {
 
 			promise.fail(
 				function() {
-					alert('somethig went wrong');
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'));
 				}
 			).done(
 				function() {
@@ -168,7 +173,8 @@ var importerUi = {
 			let recordsSelected = jQuery("#idTextArea").val();
 
 			let batchParams	= {
-					type:typeSelected, 
+					type:typeSelected,
+					batchAction : importerUi.initialBtnEvent,
 					columns:jQuery.extend({}, fieldsSelected)
 				};
             
@@ -176,7 +182,7 @@ var importerUi = {
 
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -190,7 +196,7 @@ var importerUi = {
 			let batchDetailsPromise = importerService.getBatch(this.batchId);
 			batchDetailsPromise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -207,7 +213,7 @@ var importerUi = {
 			let promise = importerService.getFieldList(batchDetailsObj.params.type, batchDetailsObj.params.columns);
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -227,12 +233,12 @@ var importerUi = {
 			let promise = importerService.getRecordsList(batchDetailsObj.params.type, batchColumnsObj.colIds, batchDetailsObj.start_id);
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
 					let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
-					importerUi.showProgress('Fetching records from client - ', 100);
+					importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), 100);
 					importerUi.loadHandsonView(batchColumnsObj, batchRecordsObj);
 				}
 			);
@@ -242,7 +248,7 @@ var importerUi = {
 			let promise = importerService.getRecordsTemp(batchDetailsObj.id, tempOffset);
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -255,12 +261,12 @@ var importerUi = {
 
 					if(importerUi.batchTempRecords.length <  batchRecordsObj.count)
 					{
-						importerUi.showProgress('Fetching records from temp - ', ((importerUi.batchTempRecords.length/batchRecordsObj.count)*100));
+						importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_TEMP_RECORDS'), ((importerUi.batchTempRecords.length/batchRecordsObj.count)*100));
 						importerUi.getRecordsTemp(batchDetailsObj, batchColumnsObj, importerUi.batchTempRecords.length);
 					}
 					else
 					{
-						importerUi.showProgress('Fetching records from temp - ', 100);
+						importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_TEMP_RECORDS'), 100);
 						importerUi.loadHandsonView(batchColumnsObj, importerUi.batchTempRecords);
 					}
 
@@ -296,7 +302,11 @@ var importerUi = {
 			handontableParams.columns		= batchColumnsObj.colProperties;
 			handontableParams.contextMenu	= true;
 			handontableParams.stretchH		= 'none';
-			handontableParams.minSpareRows	= 1;
+
+			if (importerUi.batchDetails.params.batchAction == 'add-data')
+			{
+				handontableParams.minSpareRows	= 1;
+			}
 
 			/*
 			 * This loop is to remove 'backslash' from string value
@@ -304,18 +314,7 @@ var importerUi = {
 			for(i = 0; i < batchRecordsObj.length; i++ )
 			{
 				let thisBatchRecObj = batchRecordsObj[i];
-
 				batchRecordsObj[i] = jQuery.parseJSON(JSON.stringify(batchRecordsObj[i]));
-
-				//~ for (var property in thisBatchRecObj) {
-					//~ if (thisBatchRecObj.hasOwnProperty(property)) {
-						//~ let value = thisBatchRecObj[property];
-						//~ if(typeof(value) == 'string') {
-							//~ batchRecordsObj[i][property] = value.replace(/\\/g, "");
-							//~ //batchRecordsObj[i][property] = jQuery.parseJSON(value);
-						//~ }
-					//~ }
-				//~ }
 			}
 
 			if(batchRecordsObj)
@@ -366,10 +365,10 @@ var importerUi = {
 			let batchDetViewBtn = importerUi.createButton('JForm["batchView"]', 'batchView', 'batchView', 'View Batch Details');
 			batchDetViewBtn.on('click', importerUi.viewBaatchStatus);
 
+			jQuery("#importer-buttons-container").append(batchDetViewBtn);
 			jQuery("#importer-buttons-container").append(saveTempButton);
 			jQuery("#importer-buttons-container").append(validateButton);
 			jQuery("#importer-buttons-container").append(importButton);
-			jQuery("#importer-buttons-container").append(batchDetViewBtn);
 			jQuery("#importer-buttons-container").append(backButton);
 
 			let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
@@ -389,7 +388,7 @@ var importerUi = {
 		let promise = importerService.getTempStatus(importerUi.batchDetails.id);
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -397,13 +396,11 @@ var importerUi = {
 					jQuery('#batchStatus').modal('show');
 					jQuery('#batchStatusTitle').text(importerUi.batchDetails.batch_name);
 					jQuery('#batchStatusBody').append("<ul class='list-group'></ul>");
-					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total CSV records - <b>" + tableRecordsCount + "</b></li>");
-					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Temp records - <b>" + temDetails.itemsTotal + "</b></li>");
-					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Validated records - <b>" + temDetails.validatedTotal + "</b></li>");
-					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Invalid records - <b>" + temDetails.invalidTotal + "</b></li>");
-					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>Total Imported records - <b>" + temDetails.importedTotal + "</b></li>");
-					console.log(temDetails);
-					
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_CSV_REC') + "<b>" + tableRecordsCount + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_TMP_REC') + "<b>" + temDetails.itemsTotal + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_VLD_REC') + "<b>" + temDetails.validatedTotal + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_INVLD_REC') + "<b>" + temDetails.invalidTotal + "</b></li>");
+					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_IMP_REC') + "<b>" + temDetails.importedTotal + "</b></li>");
 				}
 			);
 	},
@@ -421,8 +418,7 @@ var importerUi = {
 		},
 
 	showProgress : function(text, percentage){
-
-			let showPercent = (percentage > 100) ? 100 : Math.round(percentage * 100) / 100;
+			let showPercent = (percentage > 100) ? 100 : Math.round((percentage * 100) / 100);
 
 			jQuery("#progress-text").text(text + " " + showPercent + "% done");
 			jQuery("#pg-bar").css('width', showPercent + "%");
@@ -446,20 +442,26 @@ var importerUi = {
 		},
 
 	importTempRecords : function (event, itemStart=0){
+		console.log(event.target.id);
 			let allItems		= importerUi.hot.getSourceData();
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let pgWidth			= ((itemStart) / recordsCount)*(100);
 
-			importerUi.showProgress('Importing records...', pgWidth);
+			importerUi.showProgress(Joomla.JText._('COM_IMP_REC_IMPORTING'), pgWidth);
 
 			if(itemStart >= recordsCount)
 			{
 				importerUi.hot.render();
-				alert("done everything");
-				//jQuery("#pg-bar").css('width', "0");
+				alert(Joomla.JText._('COM_IMP_REC_IMPORTED'));
 				importerUi.doneProgress('');
-				//location.reload();
+
+				if(event.target.id === 'import-btn')
+				{
+					importerUi.batchDetails.import_status = 1;
+					importerUi.updateBatch(event);
+				}
+
 				return;
 			}
 
@@ -468,7 +470,7 @@ var importerUi = {
 			let promise = importerService.importTempRecords(checkItems, importerUi.batchDetails);
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -492,13 +494,13 @@ var importerUi = {
 			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
 			//jQuery("#pg-bar").css('width', pgWidth + "%");
-			importerUi.showProgress('Importing records....', pgWidth);
+			importerUi.showProgress(Joomla.JText._('COM_IMP_REC_IMPORTING'), pgWidth);
 
 			let promise		= importerService.saveTempRecords(importedRecDetails, importerUi.batchDetails, '', true);
 
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -516,12 +518,12 @@ var importerUi = {
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let pgWidth			= ((itemStart) / recordsCount)*(100);
-			var pgText			= 'Saving into temp table...';
+			var pgText			= Joomla.JText._('COM_IMP_REC_SAVING_TEMP');
 
 			//jQuery("#pg-bar").css('width', pgWidth + "%");
 			if(event.target.id === 'validate')
 			{
-				pgText			= 'Validating records...';
+				pgText			= Joomla.JText._('COM_IMP_REC_VALIDATING');
 			}
 			
 			importerUi.showProgress(pgText, pgWidth);
@@ -531,7 +533,7 @@ var importerUi = {
 
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -545,9 +547,13 @@ var importerUi = {
 					}
 
 					if (itemStart >= recordsCount){
-						alert("saved in temp");
-						//jQuery("#pg-bar").css('width', "0%");
+						if(event.target.id === 'validate'){
+							alert(Joomla.JText._('COM_IMP_REC_VALIDATED'));
+						}else{
+							alert(Joomla.JText._('COM_IMP_REC_SAVED_TEMP'));
+						}
 						importerUi.doneProgress('');
+						importerUi.batchDetails.import_status = '';
 						importerUi.updateBatch(event.target.id); 
 					}else{
 						if(event.target.id === 'validate'){
@@ -562,23 +568,19 @@ var importerUi = {
 
 	validateTempRecords : function(event, itemStart){
 			let allItems		= importerUi.hot.getSourceData();
-
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let checkItems		= allItems.slice(itemStart, itemsEnd);
-
 			let completedItem	= importerUi.postItemSize / 3;
-
 			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
-			//jQuery("#pg-bar").css('width', pgWidth + "%");
-			importerUi.showProgress('Validating records..', pgWidth);
+			importerUi.showProgress(Joomla.JText._('COM_IMP_REC_VALIDATING'), pgWidth);
 
 			let promise = importerService.validateRecords(checkItems, importerUi.batchDetails);
 
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -609,12 +611,12 @@ var importerUi = {
 			let completedItem	= importerUi.postItemSize * (2/3);
 			let pgWidth			= ((itemStart + completedItem) / recordsCount)*(100);
 
-			var pgText			= 'Saving into temp table...';
+			var pgText			= Joomla.JText._('COM_IMP_REC_SAVING_TEMP');
 
 			//jQuery("#pg-bar").css('width', pgWidth + "%");
 			if(event.target.id === 'validate')
 			{
-				pgText			= 'Validating records...';
+				pgText			= Joomla.JText._('COM_IMP_REC_VALIDATING');
 			}
 			
 			importerUi.showProgress(pgText, pgWidth);
@@ -623,7 +625,7 @@ var importerUi = {
 
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -636,11 +638,11 @@ var importerUi = {
 			);
 		},
 
-	updateBatch : function(event){
+	updateBatch : function(event, importStatusUpdate = 0){
 			let promise = importerService.updateBatch(importerUi.batchDetails);
 			promise.fail(
 				function() {
-					alert("something went wrong!")
+					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
@@ -691,7 +693,7 @@ var importerUi = {
 			if(multiplee){
 				$comboEle.attr("multiple", "multiple");
 			}
-			$comboEle.append("<option>Select</option>");
+			//$comboEle.append("<option>Select</option>");
 
 			jQuery.each(optionList, function (i, el) {
 				if(typeof(el) == 'object'){
@@ -738,7 +740,7 @@ jQuery(document).ready(function(){
 
 		let batchId = jQuery("#batchId").val();
 		if(batchId){
-			importerUi.showProgress("Fetching records.. Please wait", 1);
+			importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), 1);
 			importerUi.batchId = batchId;
 			importerUi.getBatch();
 		}
