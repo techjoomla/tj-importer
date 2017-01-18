@@ -44,23 +44,15 @@ class ImporterApiResourceBatches extends ApiResource
 			$batches_model->setState('filter.client', $clientApp);
 			$batches		= $batches_model->getItems();
 
-			$timezone = new DateTimeZone(JFactory::getUser()->getParam('timezone'));
-
 			foreach ($batches as $key => $batch)
 			{
-				$createdDate = new JDate($batch->created_date);
-				$createdDate = $createdDate->setTimezone($timezone);
-
-				$updatedDate = new JDate($batch->updated_date);
-				$updatedDate = $updatedDate->setTimezone($timezone);
-
 				$createdUser = JFactory::getUser($batch->created_user);
 				$batches[$key]->created_user = $createdUser->name . " (" . $createdUser->username . ")";
 
-				$batches[$key]->created_date = JFactory::getDate($createdDate->__toString())->format('d M Y - h:i a');
+				$batches[$key]->created_date = JHtml::date($batch->created_date, 'd M Y - h:i a');
 				$batches[$key]->updated_date = (($batch->updated_date == '0000-00-00 00:00:00') ?
 												$batch->updated_date :
-												JFactory::getDate($updatedDate->__toString())->format('d M Y - h:i a'));
+												JHtml::date($batch->updated_date, 'd M Y - h:i a'));
 			}
 
 			$returnData = array(

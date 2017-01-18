@@ -10,6 +10,8 @@
 // No direct access
 defined('_JEXEC') or die;
 
+JFactory::getLanguage()->load('com_importer', JPATH_SITE, 'en-GB', true);
+
 /**
  * TMT controller Class.
  *

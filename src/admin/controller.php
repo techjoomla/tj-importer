@@ -9,6 +9,7 @@
 
 defined('_JEXEC') or die('Restricted access');
 
+JFactory::getLanguage()->load('com_importer', JPATH_ADMINISTRATOR, 'en-GB', true);
 jimport('joomla.application.component.controller');
 
 /**

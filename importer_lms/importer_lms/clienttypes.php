@@ -10,9 +10,6 @@
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
 
-// Load ZOO config
-require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
-
 /**
  * Clienttypes Resource for Importer_zoo Plugin.
  *

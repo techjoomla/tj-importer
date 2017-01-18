@@ -119,7 +119,7 @@ class ImporterApiResourceItem extends ApiResource
 	{
 		$tempKeys	= array();
 		$jinput		= JFactory::getApplication()->input;
-		$records	= (array) json_decode($jinput->get('records', '', 'STRING'));
+		$records	= (array) json_decode($jinput->get('records', '', 'RAW'));
 		$batch		= (array) json_decode($jinput->get('batchDetails', '', 'STRING'));
 
 		$invalidDataStr			= $jinput->get('invalidData', '', 'STRING');
