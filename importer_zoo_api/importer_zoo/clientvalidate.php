@@ -12,6 +12,7 @@ jimport('joomla.plugin.plugin');
 
 // Load ZOO config
 require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
+require_once JPATH_SITE . '/plugins/api/importer_zoo/helper.php';
 
 /**
  * Clientcolumns Resource for Importer_zoo Plugin.
@@ -45,6 +46,7 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 		$this->zapp		= App::getInstance('zoo');
 		$columns_array	= $decodeFile = array();
 		$jinput			= JFactory::getApplication()->input;
+		$this->helper	= new ZooApiHelper;
 
 		$checkRecords 	= (array) json_decode($jinput->get('records', '', 'STRING'));
 		$batch 			= json_decode($jinput->get('batchDetails', '', 'STRING'));
@@ -58,11 +60,30 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 			$invalidRec		= array();
 			$invalidEle		= array();
 
+			// Added alias type forcefully.
 			$decodeElements['alias']->type = 'alias';
+
+			$validOptions	= array();
+
+			foreach ($decodeElements as $k => $v)
+			{
+				if ($v->type == 'radio' || $v->type == 'select')
+				{
+					$optionsArray = (array) $v->option;
+
+					foreach ($optionsArray as $optionVal)
+					{
+						$validOptions[$k]['options'][] = $optionVal->value;
+					}
+
+					$validOptions[$k]['multiple']	= ($v->multiple) ? 1 : 0;
+					$validOptions[$k]['type	']		= $v->type;
+				}
+			}
 
 			foreach ($checkRecords as $record)
 			{
-				$invalidEle	= $this->validate((array) $record, $decodeElements);
+				$invalidEle	= $this->validate((array) $record, $decodeElements, $validOptions);
 				$invalidRec[$record->tempId] = $invalidEle;
 			}
 
@@ -79,14 +100,15 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	/**
 	 * POST function unnecessary
 	 *
-	 * @param   Array  $record          A single record from temp table
-	 * @param   Array  $decodeElements  Field element details
+	 * @param   Array  $record              A single record from temp table
+	 * @param   Array  $decodeElements      Field element details
+	 * @param   Array  $validOptionsFields  Field Keys with valid options (Details of only select and radio buttons)
 	 * 
 	 * @return  STRING  error message
 	 * 
 	 * @since  3.0
 	 **/
-	public function validate($record, $decodeElements)
+	public function validate($record, $decodeElements, $validOptionsFields)
 	{
 		$invalidFields = null;
 
@@ -94,26 +116,89 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 		{
 			foreach ($record as $recordKey => $recordData)
 			{
+				$recordData = stripslashes($recordData);
+
 				if (array_key_exists($recordKey, $decodeElements))
 				{
 					switch ($decodeElements[$recordKey]->type)
 					{
 						case 'alias' :
-								$correctVal = $this->zapp->string->sluggify($recordData);
+								$correctVal		= $this->zapp->string->sluggify($recordData);
 
-								if ($recordData != $correctVal)
+								if ($record['recordid'])
+								{
+									if ($recordData != $correctVal || $this->zapp->alias->item->checkAliasExists($recordData, $record['recordid']))
+									{
+										$invalidFields[] = $recordKey;
+									}
+								}
+								else
+								{
+									if (($recordData != $correctVal) || $this->zapp->alias->item->checkAliasExists($recordData, ''))
+									{
+										$invalidFields[] = $recordKey;
+									}
+								}
+							break;
+						case 'relateditemspro' :
+								$explodeByPipe	= explode("|", trim($recordData));
+								$passData	= array_filter($explodeByPipe);
+
+								// $aliasRecords	= $this->zapp->table->item->getByAliases($passData);
+								$aliasRecords	= $this->helper->getByAliases($passData);
+
+								if (count($passData) != count($aliasRecords))
 								{
 									$invalidFields[] = $recordKey;
 								}
 							break;
-						case 'relateditemspro' :
-
-							break;
 						case 'date' :
 
 							break;
+						case 'radio' :
+								$validOptions	= $validOptionsFields[$recordKey]['options'];
+
+								if (!(in_array($recordData, $validOptions)) && trim($recordData))
+								{
+									$invalidFields[] = $recordKey;
+								}
+
+							break;
+						case 'select' :
+								$validOptions	= $validOptionsFields[$recordKey]['options'];
+
+								if ($decodeElements[$recordKey]->multiple)
+								{
+									$explodeByPipe	= explode("|", $recordData);
+									$containsSearch = count(array_intersect($explodeByPipe, $validOptions)) == count($explodeByPipe);
+
+									if (!$containsSearch  && trim($recordData))
+									{
+										$invalidFields[] = $recordKey;
+									}
+								}
+								elseif (!(in_array($recordData, $validOptions)) && trim($recordData))
+								{
+									$invalidFields[] = $recordKey;
+								}
+							break;
 					}
 				}
+			}
+
+			if (!isset($record['alias']) || trim($record['alias']) == '')
+			{
+				$invalidFields[] = 'alias';
+			}
+
+			if (!isset($record['name']) || trim($record['name']) == '')
+			{
+				$invalidFields[] = 'name';
+			}
+
+			if (!isset($record['category']) || trim($record['category']) == '')
+			{
+				$invalidFields[] = 'category';
 			}
 		}
 

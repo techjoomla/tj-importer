@@ -52,6 +52,7 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			$colBasicEle_array['recordid']	= 'recordid';
 			$colBasicEle_array['name']		= 'name';
 			$colBasicEle_array['alias']		= 'alias';
+			$colBasicEle_array['state']		= 'state';
 			$colBasicEle_array['category']		= 'category';
 
 			// Non-core fields of zoo
@@ -61,11 +62,37 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			// selected field filter needs to apply on columns_array
 			$columns_array = array_merge($colBasicEle_array, $colElement_array);
 
+			// Getting only selected fields from step1.
 			if (!empty($fields))
 			{
 				$filppedFields 	= array_flip($fields);
 				$columns_array = array_intersect_key($columns_array, $filppedFields);
 			}
+
+			$escapeColumns 	= array(
+									"_itemaccess" => 1,
+									"_itemauthor" => 1,
+									"_itemcategory" => 1,
+									"_itemcommentslink" => 1,
+									"_itemcreated" => 1,
+									"_itemedit" => 1,
+									"_itemfrontpage" => 1,
+									"_itemhits" => 1,
+									"_itemlink" => 1,
+									"_itemmodified" => 1,
+									"_itemname" => 1,
+									"_itemprint" => 1,
+									"_itempublish_down" => 1,
+									"_itempublish_up" => 1,
+									"_itemprevnext" => 1,
+									"_itemsearchable" => 1,
+									"_itemstate" => 1,
+									"_itemtag" => 1,
+									"_staticcontent" => 1
+									);
+
+			// Escape the unwanted columns
+			$columns_array = array_diff_key($columns_array, $escapeColumns);
 
 			// Getting only id's of columns_array
 			$columnsId_array 			= array_keys($columns_array);
@@ -78,9 +105,8 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			array_push($colReadOnly_keys, "recordid");
 			$this->colReadOnly_keys			= $colReadOnly_keys;
 
-			$colProperties_array 	= array_map(array($this, 'colProperties'), $columnsId_array);
-
-			$columnsName_array 			= array_values($columns_array);
+			$colProperties_array			= array_map(array($this, 'colProperties'), $columnsId_array);
+			$columnsName_array				= array_values($columns_array);
 
 			$finalReturn['colProperties']	= $colProperties_array;
 			$finalReturn['colFields']		= $columns_array;
