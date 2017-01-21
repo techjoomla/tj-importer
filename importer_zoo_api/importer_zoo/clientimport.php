@@ -14,6 +14,7 @@ jimport('joomla.plugin.plugin');
 require_once JPATH_ADMINISTRATOR . '/components/com_zoo/zoo.php';
 require_once JPATH_ADMINISTRATOR . '/components/com_zoo/config.php';
 require_once JPATH_ADMINISTRATOR . '/components/com_zoo/controllers/item.php';
+require_once JPATH_SITE . '/plugins/api/importer_zoo/helper.php';
 
 /**
  * Clientcolumns Resource for Importer_zoo Plugin.
@@ -47,6 +48,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 		$this->jinput	= $jinput		= JFactory::getApplication()->input;
 		$records		= $jinput->get('records', '', 'RAW');
 		$batch			= $jinput->get('batchDetails', '', 'STRING');
+		$this->helper	= new ZooApiHelper;
 
 		$this->user		= JFactory::getUser();
 		$this->records	= json_decode($records);
@@ -237,6 +239,9 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 
 		$this->zapp->table->item->save($item);
 		$this->zapp->category->saveCategoryItemRelations($item, array((int) $recordDetails->category));
+
+		// Save for image resizing
+		$this->helper->insertResizeImageRecord($this->batch->id, $item->id);
 
 		$riProEleDataFiltered = array_filter($riProEleData);
 

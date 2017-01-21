@@ -61,4 +61,20 @@ class ZooApiHelper extends AppTable
 
 		return $this->zapp->table->item->_queryObjectList($query);
 	}
+
+	/**
+	 * Function to insert record to process images resize in resize table.
+	 *
+	 * @param   Integer  $batch_id  Batch Id.
+	 * @param   Integer  $item_id   Record Id.
+	 *
+	 * @return  return $cat->id updated cat id
+	 *
+	 * @since   1.0.0
+	 */
+
+	public function insertResizeImageRecord($batch_id, $item_id)
+	{
+		return true;
+	}
 }
