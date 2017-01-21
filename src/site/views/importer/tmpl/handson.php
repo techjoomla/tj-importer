@@ -14,12 +14,11 @@ $doc = JFactory::getDocument();
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/handsontable.full.css');
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/sweetalert.css');
 
-//$doc->addScript(JURI::base().'components/com_osian/js/sweetalert.min.js');
 $doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
 $doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/handsontable.full.js');
-$doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
-$doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.min.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.min.js');
 ?>
 
 <style>
@@ -88,7 +87,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 		  <!-- Modal content-->
 		  <div class="modal-content">
 				<div class="modal-header">
-				  <button type="button" class="close" eventFor="batchStatus" onclick="importerUi.dismissModal(this)">&times;</button>
+				  <button type="button" class="close" for="batchStatus" onclick="importerUi.dismissModal(this)">&times;</button>
 				  <h4 class="modal-title" id="batchStatusTitle">Batch Details</h4>
 				</div>
 
@@ -97,7 +96,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 				</div>
 
 				<div class="modal-footer" id="modal-footer-1">
-				  <button type="button" class="btn btn-default" eventFor="batchStatus" onclick="importerUi.dismissModal(this)">Close</button>
+				  <button type="button" class="btn btn-default" for="batchStatus" onclick="importerUi.dismissModal(this)">Close</button>
 				</div>
 		  </div>
 		</div>

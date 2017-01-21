@@ -7,6 +7,7 @@ var importerUi = {
 	colName : '',
 	colFields : '',
 	postItemSize : 5,
+	fetchItemSize : 2,
 	batchColumns : '',
 	batchDetails : '',
 	colProperties : '',
@@ -14,12 +15,12 @@ var importerUi = {
 	initialBtnEvent : '',
 	textColorNew : false,
 	batchTempRecords : [],
+	batchClientRecords : [],
 	batchTempInvalid : [],
 	validateTempItems :[],
 
 	showModalFirst : function (thiss){
-		
-		console.log(thiss);
+
 		if(thiss.id == 'load-batch')
 		{
 			jQuery('#load-batch-model').modal('show');
@@ -36,11 +37,11 @@ var importerUi = {
 	},
 
 	dismissModal : function (thiss){
-		let eventFor	= '#' + thiss.getAttribute("eventFor");
-		let modalBody	= eventFor + " .modal-body";
+		let eventForr	= '#' + thiss.getAttribute("for");
+		let modalBody	= eventForr + " .modal-body";
 		jQuery(modalBody).html("");
 		jQuery("#fieldButton").remove();
-		jQuery(eventFor).modal('hide');
+		jQuery(eventForr).modal('hide');
 	},
 
 	getBatchesList : function(clientApp)
@@ -54,9 +55,6 @@ var importerUi = {
 		).done(
 			function() {
 				let batchesInfo	= jQuery.parseJSON(promise.responseText);
-
-				console.log(batchesInfo);
-
 				importerUi.showBatchesList(batchesInfo);
 
 				return;
@@ -87,7 +85,6 @@ var importerUi = {
 				dynamicTr += '<td>' + batchesInfo.batches[i].updated_date + '</td>';
 				dynamicTr += '<td>' + batchesInfo.batches[i].created_user + '</td>';
 				dynamicTr += '</tr>';
-				//console.log(batchName);
 			}
 
 			var batchesTable 	= "<table class='batches-table'>" + dynamicTr + "</table>";
@@ -144,20 +141,20 @@ var importerUi = {
 			).done(
 				function() {
 					let clientFieldsObj	= jQuery.parseJSON(promise.responseText);
-					let fieldDropDown	= importerUi.createDropDownList('Fields : ', 'JForm["fieldList"]', '', 'fieldList', clientFieldsObj.colFields, true);
+					
 
 					jQuery("#fieldListDiv").remove();
 					jQuery(".fieldButton").remove();
 					jQuery("#idTextAreaDiv").remove();
-					jQuery("#step1").append(fieldDropDown);
 
 					let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton btn .btn-success', 'fieldButton', 'Submit');
 					submitButton.on('click', importerUi.submitBatch);
 
-					jQuery("#step1").append(fieldDropDown);
-
 					if(importerUi.initialBtnEvent == 'edit-data'){
-						let idTextArea = importerUi.createTextArea("Record id's", 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
+						let fieldDropDown	= importerUi.createDropDownList('Fields : ', 'JForm["fieldList"]', '', 'fieldList', clientFieldsObj.colFields, true);
+						jQuery("#step1").append(fieldDropDown);
+
+						let idTextArea = importerUi.createTextArea("Record Aliases", 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
 						jQuery("#step1").append(idTextArea);
 					}
 
@@ -229,17 +226,42 @@ var importerUi = {
 			);
 		},
 
-	getRecordsClient : function(batchDetailsObj, batchColumnsObj){
-			let promise = importerService.getRecordsList(batchDetailsObj.params.type, batchColumnsObj.colIds, batchDetailsObj.start_id);
+	getRecordsClient : function(batchDetailsObj, batchColumnsObj, startPoint = 0){
+
+			let startIdStr = batchDetailsObj.start_id;
+			let startIdArr = startIdStr.split(',');
+			let startIdCnt = startIdArr.length;
+
+			let endPoint	= importerUi.fetchItemSize + startPoint;
+
+			let slicedStartIdArr = startIdArr.slice(startPoint, endPoint);
+			let slicedStartIdStr = slicedStartIdArr.join();
+		
+			let promise = importerService.getRecordsList(batchDetailsObj.params.type, batchColumnsObj.colIds, slicedStartIdStr);
 			promise.fail(
 				function() {
 					alert(Joomla.JText._('COM_IMP_ERROR_MSG'))
 				}
 			).done(
 				function() {
-					let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
-					importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), 100);
-					importerUi.loadHandsonView(batchColumnsObj, batchRecordsObj);
+					
+					if(startPoint < startIdCnt)
+					{
+						let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
+
+						if (batchRecordsObj != null)
+						{
+							importerUi.batchClientRecords = importerUi.batchClientRecords.concat(batchRecordsObj);
+						}
+
+						importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), ((startPoint/startIdCnt) * 100));
+
+						importerUi.getRecordsClient(batchDetailsObj, batchColumnsObj, startPoint + importerUi.fetchItemSize);
+					}
+					else
+					{
+						importerUi.loadHandsonView(batchColumnsObj, importerUi.batchClientRecords);
+					}
 				}
 			);
 		},
@@ -340,7 +362,6 @@ var importerUi = {
 
 			importerUi.hot.updateSettings({
 					afterChange: function(changes, source) {
-							//console.log(importerUi.hot.tr[0]);
 							importerUi.checkTempItems = [];
 							for(i = 0; i < changes.length; i++){
 								if(changes[i][2] != changes[i][3]){
@@ -442,7 +463,6 @@ var importerUi = {
 		},
 
 	importTempRecords : function (event, itemStart=0){
-		console.log(event.target.id);
 			let allItems		= importerUi.hot.getSourceData();
 			let recordsCount	= (importerUi.hot.getSourceData()).length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;

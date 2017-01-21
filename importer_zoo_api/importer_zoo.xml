@@ -11,6 +11,7 @@
 	<description>Importer ZOO plugin</description>
 	<files>
 		<filename plugin="importer_zoo">importer_zoo.php</filename>
+		<filename>helper.php</filename>
         <folder>importer_zoo</folder> 
 	</files>
 </extension>

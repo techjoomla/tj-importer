@@ -19,8 +19,8 @@ $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/style.css
 $doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
 $doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/handsontable.full.js');
-$doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
-$doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.min.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.min.js');
 ?>
 
 <div>
@@ -51,7 +51,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 		  <!-- Modal content-->
 		  <div class="modal-content">
 				<div class="modal-header">
-				  <button type="button" class="close" eventFor="step-one-model" onclick="importerUi.dismissModal(this)">&times;</button>
+				  <button type="button" class="close" for="step-one-model" onclick="importerUi.dismissModal(this)">&times;</button>
 				  <h4 class="modal-title" id="modal-title-1"></h4>
 				</div>
 
@@ -59,7 +59,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 				</div>
 
 				<div class="modal-footer" id="modal-footer-1">
-				  <button type="button" class="btn btn-default" eventFor="step-one-model" onclick="importerUi.dismissModal(this)">Close</button>
+				  <button type="button" class="btn btn-default" for="step-one-model" onclick="importerUi.dismissModal(this)">Close</button>
 				</div>
 		  </div>
 		</div>
@@ -73,7 +73,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 		  <!-- Modal content-->
 		  <div class="modal-content">
 				<div class="modal-header">
-				  <button type="button" class="close" eventFor="load-batch-model" onclick="importerUi.dismissModal(this)">&times;</button>
+				  <button type="button" class="close" for="load-batch-model" onclick="importerUi.dismissModal(this)">&times;</button>
 				  <h4 class="modal-title" id="modal-title-2">Click on batch name to select the batch</h4>
 				</div>
 
@@ -81,7 +81,7 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 				</div>
 
 				<div class="modal-footer" id="modal-footer-2">
-				  <button type="button" class="btn btn-default" eventFor="load-batch-model" onclick="importerUi.dismissModal(this)">Close</button>
+				  <button type="button" class="btn btn-default" for="load-batch-model" onclick="importerUi.dismissModal(this)">Close</button>
 				</div>
 		  </div>
 		</div>
