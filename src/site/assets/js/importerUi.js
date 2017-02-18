@@ -202,7 +202,7 @@ var importerUi = {
 			
 			let typeSelected	= (event) ? jQuery("option:selected", this).val() : singleType;
 
-			if (typeSelected == '')
+			if (typeSelected == '' && event)
 			{
 				jQuery("#fieldListDiv").remove();
 				jQuery(".fieldButton").remove();
