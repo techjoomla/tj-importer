@@ -77,8 +77,7 @@ class ZooApiHelper extends AppTable
 	/**
 	 * getSuggestions function
 	 *
-	 * @param   Array   $aliases  A array of aliases
-	 * @param   String  $type     The type name
+	 * @param   Array  $aliases  A array of aliases
 	 *
 	 * @return  Object  object of records
 	 *
@@ -86,7 +85,6 @@ class ZooApiHelper extends AppTable
 	 **/
 	public function getSuggestions($aliases)
 	{
-
 		$aliasesPipeStr = $aliases;
 
 		$sanatizedStr = preg_replace('/[^a-z0-9|\-]/', "---", $aliasesPipeStr);
@@ -99,14 +97,16 @@ class ZooApiHelper extends AppTable
 				->where('alias LIKE "%' . $sanatizedStr . '%"');
 
 		$this->database->setQuery($query);
+
 		return $this->database->loadColumn();
 	}
 
 	/**
 	 * Function to insert record to process images resize in resize table.
 	 *
-	 * @param   Integer  $batch_id  Batch Id.
-	 * @param   Integer  $item_id   Record Id.
+	 * @param   Integer  $batch_id    Batch Id.
+	 * @param   Integer  $item_id     Record Id.
+	 * @param   Integer  $imgpresent  Image present or not.
 	 *
 	 * @return  return $cat->id updated cat id
 	 *
@@ -124,7 +124,7 @@ class ZooApiHelper extends AppTable
 		$this->database->setQuery($findQuery);
 		$findQueryResult = $this->database->loadResults();
 
-		if (empty($findQueryResult) and $imgpresent==1)
+		if (empty($findQueryResult) and $imgpresent == 1)
 		{
 			if (!$this->database->insertObject('#__resize_image_zoo', $data, 'item_id'))
 			{

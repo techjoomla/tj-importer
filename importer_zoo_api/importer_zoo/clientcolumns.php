@@ -111,9 +111,6 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			$myfinalArrayy = array();
 			$defaultColumns = array('zooid', 'name', 'alias');
 
-//~ print_r($decodeElements);
-//~ die;
-
 			foreach ($columns_array as $colK => $colV)
 			{
 				$tempKetDetails		= $decodeElements[$colK];
