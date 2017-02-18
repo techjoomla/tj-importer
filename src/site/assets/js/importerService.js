@@ -58,7 +58,7 @@ var importerService = {
 			let tempRecords = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer&resource=item&format=raw",
-					data : {batch_id: batchId, offset: itemOffset, limit : 2},
+					data : {batch_id: batchId, offset: itemOffset, limit : importerUi.fetchItemSize},
 					headers: {'x-auth':'session'}
 				});
 
@@ -75,6 +75,18 @@ var importerService = {
 				});
 
 			return tempRecords;
+		},
+
+	getSuggestions : function(queryValue)
+		{
+			let suggestions = jQuery.ajax({
+						type: "GET",
+						url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientsuggestions&format=raw",
+						data : {query : queryValue},
+						headers: {'x-auth':'session'}
+					});
+
+				return suggestions;
 		},
 
 	saveBatch : function(batchParams, recordsSelected, batchName = '')
@@ -140,7 +152,8 @@ var importerService = {
 								records : JSON.stringify(records),
 								batchDetails : JSON.stringify(batchDetails),
 								invalidData :  JSON.stringify(invalidData),
-								imported	: imported
+								imported	: imported,
+								primaryKey	: importerUi.primaryKey
 							},
 					headers: {'x-auth':'session'}
 				});

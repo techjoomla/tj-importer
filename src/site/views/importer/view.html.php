@@ -38,7 +38,9 @@ class ImporterViewImporter extends JViewLegacy
 		JText::script('COM_IMP_TOT_INVLD_REC');
 		JText::script('COM_IMP_TOT_IMP_REC');
 		JText::script('COM_IMP_REC_IMPORTED');
+		JText::script('COM_IMP_REC_UPDATED');
 		JText::script('COM_IMP_REC_IMPORTING');
+		JText::script('COM_IMP_REC_UPDATING');
 		JText::script('COM_IMP_REC_SAVING_TEMP');
 		JText::script('COM_IMP_REC_VALIDATING');
 		JText::script('COM_IMP_REC_VALIDATED');
@@ -50,6 +52,17 @@ class ImporterViewImporter extends JViewLegacy
 		JText::script('COM_IMP_BATCHES_TH_CRE_USER');
 
 		JText::script('COM_IMP_ERROR_MSG');
+		JText::script('COM_IMP_TAKE_TO_STEP_ONE');
+		JText::script('COM_IMP_RELOAD_PAGE');
+
+		JText::script('COM_IMP_BATCH_NAME_LABEL');
+		JText::script('COM_IMP_BATCH_TYPES_LABEL');
+		JText::script('COM_IMP_BATCH_FIELDS_LABEL');
+		JText::script('COM_IMP_BATCH_RECORD_SELECTOR_LABEL');
+		JText::script('COM_IMP_DEFAULT_ERROR_DESC');
+
+		JText::script('COM_IMP_IMPORT_BTN_NAME_IMPORT');
+		JText::script('COM_IMP_IMPORT_BTN_NAME_UPDATE');
 
 		$jinput  = JFactory::getApplication()->input;
 		$user = JFactory::getUser();
@@ -58,6 +71,10 @@ class ImporterViewImporter extends JViewLegacy
 		$this->batchId		= $jinput->get('batch_id', '', 'INT');
 		$this->userId		= $user->id;
 		$this->userName		= $user->name;
+
+		$app			= JFactory::getApplication('site');
+		$impParams		= $app->getParams('com_importer');
+		$this->pfSize	= $impParams->get('pf_batch_size');
 
 		parent::display();
 	}

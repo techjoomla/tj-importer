@@ -124,6 +124,7 @@ class ImporterApiResourceItem extends ApiResource
 
 		$invalidDataStr			= $jinput->get('invalidData', '', 'STRING');
 		$importedRecStatus		= $jinput->get('imported', false, 'BOOLEAN');
+		$primaryKey				= $jinput->get('primaryKey', '', 'STRING');
 
 		if (trim($invalidDataStr, '"'))
 		{
@@ -163,9 +164,9 @@ class ImporterApiResourceItem extends ApiResource
 					$JForm['id'] = $record['tempId'];
 				}
 
-				if (isset($record['recordid']))
+				if (isset($record[$primaryKey]))
 				{
-					$JForm['content_id']	= $record['recordid'];
+					$JForm['content_id']	= $record[$primaryKey];
 				}
 
 				if ($importedRecStatus === true)

@@ -15,12 +15,12 @@ $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/ha
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/sweetalert.css');
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/style.css');
 
-//$doc->addScript(JURI::base().'components/com_osian/js/sweetalert.min.js');
 $doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
 $doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/handsontable.full.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/sweetalert-dev.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.min.js');
-$doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.min.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 ?>
 
 <div>
@@ -41,12 +41,12 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.min.j
 
 		<button type="button" id="load-batch" class="btn demo-btns btn-secondary" onclick="importerUi.showModalFirst(this);" >Load Batch</button>
 
-		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Delete Data</button>
-		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Export Data</button>
-		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" >Edit Tags</button>
+		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" disabled>Delete Data</button>
+		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" disabled>Export Data</button>
+		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" disabled>Edit Tags</button>
 	</div>
 
-	<div class="modal fade" id="step-one-model" role="dialog" data-backdrop="static" data-keyboard="false" style="display:none;">
+	<div class="modal fade fade-div" id="step-one-model" role="dialog" data-backdrop="static" data-keyboard="false" style="display:none;">
 		<div class="modal-dialog">
 		  <!-- Modal content-->
 		  <div class="modal-content">
@@ -90,6 +90,4 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.min.j
 
 </div>
 
-<script>
-	
-</script>
+
