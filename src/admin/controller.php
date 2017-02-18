@@ -9,6 +9,7 @@
 
 defined('_JEXEC') or die('Restricted access');
 
+JFactory::getLanguage()->load('com_importer', JPATH_ADMINISTRATOR, 'en-GB', true);
 jimport('joomla.application.component.controller');
 
 /**
@@ -18,32 +19,4 @@ jimport('joomla.application.component.controller');
  */
 class ImporterController extends JControllerLegacy
 {
-	/**
-		* Method to display the view
-		*
-		* @param   typenotknown  $cachable   .
-		*
-		* @param   typenotknown  $urlparams  .
-		*
-		* @access    public
-		*
-		* @return nothing
-		*/
-	public function display($cachable = false, $urlparams = false)
-	{
-		parent::display();
-	}
-
-	/**
-		* Method to display the view
-		*
-		* @access    public
-		*
-		* @return nothing
-		*/
-	public function save()
-	{
-		$model	= $this->getModel('import');
-		$this->setRedirect(JURI::base() . "index.php?option=com_importer&view=import");
-	}
 }

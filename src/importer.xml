@@ -2,11 +2,11 @@
 <!DOCTYPE install SYSTEM "http://dev.joomla.org/xml/1.5/component-install.dtd">
 <extension type="component" version="3.0" method="upgrade">
 	<name>com_importer</name>
-	<creationDate>Jun 2015</creationDate>
-	<author>TTPL</author>
-	<authorEmail>TTPL</authorEmail>
-	<authorUrl>contact@techjoomla.com</authorUrl>
-	<version>1.0 Beta2</version>
+	<creationDate>Dec 2016</creationDate>
+	<author>Techjoomla</author>
+	<authorEmail>contact@techjoomla.com</authorEmail>
+	<authorUrl>techjoomla.com</authorUrl>
+	<version>2.0 Beta2</version>
 	<description>Bulk Import Tool</description>
 
 	<install> <!-- Runs on install -->
@@ -16,32 +16,31 @@
 	</install>
 
 	<files folder="site">
-		<folder>controllers</folder>
 		<folder>models</folder>
-		<folder>assets</folder>
-		<folder>helpers</folder>
 		<folder>views</folder>
-		<folder>adapters</folder>
-		<folder>images</folder>
+		<folder>assets</folder>
 		<filename>importer.php</filename>
 		<filename>controller.php</filename>
 		<filename>index.html</filename>
 	</files>
-	<languages folder="site/language">
-		<language tag="en-GB">en-GB/en-GB.com_importer.ini</language>
+	<languages folder="languages/site">
+		  <language tag="en-GB">en-GB/en-GB.com_importer.ini</language>
 	</languages>
 
 	<administration>
 		<menu>Importer</menu>
-
 		<files folder="admin">
-			<folder>sql</folder>
 			<folder>models</folder>
+			<folder>sql</folder>
+			<folder>tables</folder>
 			<folder>views</folder>
 			<filename>importer.php</filename>
 			<filename>controller.php</filename>
 			<filename>config.xml</filename>
+			<filename>index.html</filename>
 		</files>
-
+		<languages folder="languages/administrator">
+			  <language tag="en-GB">en-GB/en-GB.com_importer.ini</language>
+		</languages>
 	</administration>
 </extension>

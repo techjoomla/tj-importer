@@ -1,0 +1,68 @@
+.batches-table th, .batches-table td
+{
+    border-bottom: 1px solid #ddd;
+    padding: 7px;
+    text-align: centre;
+}
+.batches-table tr:hover
+{
+	background-color: #f5f5f5
+}
+label
+{
+	margin-bottom : 0 !important;
+}
+div.modal
+{
+	left: 50%;
+    margin-left: -40%;
+    width: 80%;
+}
+.sweet-alert input[type="text"]
+{
+	display:none;
+}
+.scroll-container
+{
+	margin: 1rem 0 1rem;
+	overflow: hidden;
+	border-right: 1px solid #000;
+}
+.fadded
+{
+	opacity: 0.2;
+	pointer-events: none;
+	z-index:1;	
+}
+.modal.fade.in.fadded
+{
+	z-index:1055;
+	opacity: 0.2;
+}
+.text-show
+{
+	z-index:5;
+	top:58%;
+	text-align: center;
+	color:#000;
+	font-size:16px;
+}
+.text-hide
+{
+	display:none;
+}
+.row-fluid .span6 {
+    width: 100% !important;
+}
+.sweet-alert.showSweetAlert.visible[data-has-cancel-button="false"] .sa-confirm-button-container button.confirm
+{
+	background-color: #00bfff !important;
+}
+#step1 div
+{
+	padding : 3px;
+}
+.main-box .progress
+{
+	height : 7px;
+}

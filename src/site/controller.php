@@ -10,7 +10,7 @@
 // No direct access
 defined('_JEXEC') or die;
 
-jimport('joomla.application.component.controller');
+JFactory::getLanguage()->load('com_importer', JPATH_SITE, 'en-GB', true);
 
 /**
  * TMT controller Class.
@@ -19,19 +19,4 @@ jimport('joomla.application.component.controller');
  */
 class ImporterController extends JControllerLegacy
 {
-	/**
-		* Method to display the view
-		*
-		* @param   typenotknown  $cachable   .
-		*
-		* @param   typenotknown  $urlparams  .
-		*
-		* @access    public
-		*
-		* @return nothing
-		*/
-	public function display($cachable = false, $urlparams = false)
-	{
-		parent::display();
-	}
 }
