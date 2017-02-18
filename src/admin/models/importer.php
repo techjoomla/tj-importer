@@ -19,7 +19,6 @@ use Joomla\Registry\Registry;
  */
 class ImporterModelImporter extends JModelAdmin
 {
-	
 	/**
 	 * Method to get the record form.
 	 *
