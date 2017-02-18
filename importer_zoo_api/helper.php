@@ -22,7 +22,7 @@ class ZooApiHelper extends AppTable
 {
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @since  3.0
 	 */
 	public function __construct()
@@ -35,13 +35,14 @@ class ZooApiHelper extends AppTable
 	/**
 	 * getByAliases function
 	 *
-	 * @param   Array  $aliases  A array of aliases
-	 * 
+	 * @param   Array   $aliases  A array of aliases
+	 * @param   String  $type     The type name
+	 *
 	 * @return  Object  object of records
-	 * 
+	 *
 	 * @since  3.0
 	 **/
-	public function getByAliases($aliases)
+	public function getByAliases($aliases, $type = '')
 	{
 		$aliases = (array) $aliases;
 
@@ -50,7 +51,13 @@ class ZooApiHelper extends AppTable
 			return array();
 		}
 
-		$strAliases = "'" . implode("','", $aliases) . "'";
+		$aliasesPipeStr = implode("|", $aliases);
+
+		$sanatizedStr = preg_replace('/[^a-z0-9|\-]/', "-", $aliasesPipeStr);
+
+		$aliasesSanatized = explode("|", $sanatizedStr);
+
+		$strAliases = "'" . implode("','", $aliasesSanatized) . "'";
 
 		$query = $this->database->getQuery(true);
 
@@ -59,7 +66,40 @@ class ZooApiHelper extends AppTable
 				->where('alias IN (' . $strAliases . ')')
 				->order('FIELD (alias, ' . $strAliases . ' )');
 
+		if ($type)
+		{
+			$query->where('type = "' . $type . '"');
+		}
+
 		return $this->zapp->table->item->_queryObjectList($query);
+	}
+
+	/**
+	 * getSuggestions function
+	 *
+	 * @param   Array   $aliases  A array of aliases
+	 * @param   String  $type     The type name
+	 *
+	 * @return  Object  object of records
+	 *
+	 * @since  3.0
+	 **/
+	public function getSuggestions($aliases)
+	{
+
+		$aliasesPipeStr = $aliases;
+
+		$sanatizedStr = preg_replace('/[^a-z0-9|\-]/', "---", $aliasesPipeStr);
+
+		$query = $this->database->getQuery(true);
+
+		$query->select('alias')
+				->from('#__zoo_item')
+				->setLimit('20')
+				->where('alias LIKE "%' . $sanatizedStr . '%"');
+
+		$this->database->setQuery($query);
+		return $this->database->loadColumn();
 	}
 
 	/**
@@ -73,8 +113,29 @@ class ZooApiHelper extends AppTable
 	 * @since   1.0.0
 	 */
 
-	public function insertResizeImageRecord($batch_id, $item_id)
+	public function insertResizeImageRecord($batch_id, $item_id, $imgpresent=1)
 	{
+		$data			= new stdClass;
+		$data->batch_id	= $batch_id;
+		$data->item_id	= $item_id;
+
+		$findQuery = $this->database->getQuery(true);
+		$findQuery->select("*")->from("#__resize_image_zoo")->where('item_id = ' . $item_id . ' AND batch_id = ' . $batch_id);
+		$this->database->setQuery($findQuery);
+		$findQueryResult = $this->database->loadResults();
+
+		if (empty($findQueryResult) and $imgpresent==1)
+		{
+			if (!$this->database->insertObject('#__resize_image_zoo', $data, 'item_id'))
+			{
+				return $this->database->getErrorMsg() . 'Error occurred while inserting records into resize_image table.';
+			}
+			else
+			{
+				return true;
+			}
+		}
+
 		return true;
 	}
 }

@@ -19,7 +19,7 @@ require_once JPATH_SITE . '/plugins/api/importer_zoo/helper.php';
  *
  * @since  2.5
  */
-class Importer_ZooApiResourceClientvalidate extends ApiResource
+class Importer_ZooApiResourceClientsuggestions extends ApiResource
 {
 	/**
 	 * GET function to fetch columns in zoo
@@ -30,8 +30,13 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	 **/
 	public function get()
 	{
-		// $this->plugin->setResponse("POST method is not supporter, try GET method");
-		die("in get funtion");
+		$this->helper	= new ZooApiHelper;
+		$jinput			= JFactory::getApplication()->input;
+		$aliases		= $jinput->get('query', '', 'RAW');
+
+		$suggestions	= $this->helper->getSuggestions($aliases);
+
+		$this->plugin->setResponse($suggestions);
 	}
 
 	/**

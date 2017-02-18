@@ -44,10 +44,23 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		$jinput			= JFactory::getApplication()->input;
 
 		$this->type		= $jinput->get('type', '', 'STRING');
-		$this->fields	= $jinput->get('fields', '', 'ARRAY');
+		$fields			= $jinput->get('fields', '', 'ARRAY');
 		$ids			= $jinput->get('ids', '', 'STRING');
 		$this->ids		= array_filter(explode(",", $ids));
 		$this->helper	= new ZooApiHelper;
+
+		$this->fields	= array();
+		$this->primaryKey = '';
+
+		foreach ($fields as $field)
+		{
+			$this->fields[][$field['id']] = $field['name'];
+
+			if ($field['primary'])
+			{
+				$this->primaryKey = $field['id'];
+			}
+		}
 
 		// Get ZOO App instance
 		$this->zapp	= App::getInstance('zoo');
@@ -67,14 +80,14 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 
 		// Get instance of blog apps
 		// $records = $this->zapp->table->item->getByIds($this->ids);
-		$records = $this->helper->getByAliases($this->ids);
+		$records = $this->helper->getByAliases($this->ids, $this->type);
 
 		$recordsData = array_map(array($this, 'recordSanitize'), $records);
 		$i = 0;
 
 		foreach ($recordsData as $recordId => $recordEle)
 		{
-			$finalRecords[$i]['recordid'] = $recordId;
+			$finalRecords[$i][$this->primaryKey] = $recordId;
 
 			foreach ($recordEle as $recEleId => $recEleVal)
 			{
@@ -147,6 +160,19 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 							$valueString .= $fv['file'] . "|";
 						}
 					break;
+				case 'date':
+						foreach ($fieldValue as $k => $fieldVal)
+						{
+							try
+							{
+								$valueString = JHtml::date($fieldVal['value'], 'Y-m-d H:i:s') . "|";
+							}
+							catch (Exception $e)
+							{
+								$valueString = $fieldVal['value'] . "|";
+							}
+						}
+					break;
 				default :
 						foreach ($fieldValue as $k => $fieldVal)
 						{
@@ -189,7 +215,7 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 		$this->dbo	   = JFactory::getDBO();
 
 		$query_field = $this->dbo->getQuery(true);
-		$query_field->select('ritem_id')
+		$query_field->select('DISTINCT ritem_id')
 					->from('#__zoo_relateditemsproxref')
 					->where('item_id = ' . $itemid . ' AND element_id = ' . $this->dbo->quote($element_id));
 		$this->dbo->setQuery($query_field);

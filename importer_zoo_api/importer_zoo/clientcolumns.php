@@ -49,11 +49,11 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			}
 
 			// Core fields of zoo
-			$colBasicEle_array['recordid']	= 'recordid';
-			$colBasicEle_array['name']		= 'name';
-			$colBasicEle_array['alias']		= 'alias';
-			$colBasicEle_array['state']		= 'state';
-			$colBasicEle_array['category']		= 'category';
+			$colBasicEle_array['zooid']	= 'Zoo-id';
+			$colBasicEle_array['name']		= 'Zoo Name';
+			$colBasicEle_array['alias']		= 'Alias';
+			$colBasicEle_array['state']		= 'State';
+			$colBasicEle_array['category']	= 'Category Id';
 
 			// Non-core fields of zoo
 			$colElement_array = array_map(array($this, 'sanitize'), $decodeElements);
@@ -102,23 +102,74 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 
 			// Getting read-only keys
 			$colReadOnly_keys			= array_keys(array_filter($columnsIdFIlters_array));
-			array_push($colReadOnly_keys, "recordid");
+			array_push($colReadOnly_keys, "zooid");
 			$this->colReadOnly_keys			= $colReadOnly_keys;
 
 			$colProperties_array			= array_map(array($this, 'colProperties'), $columnsId_array);
 			$columnsName_array				= array_values($columns_array);
 
+			$myfinalArrayy = array();
+			$defaultColumns = array('zooid', 'name', 'alias');
+
+//~ print_r($decodeElements);
+//~ die;
+
+			foreach ($columns_array as $colK => $colV)
+			{
+				$tempKetDetails		= $decodeElements[$colK];
+
+				if ($optionArray = (array) $tempKetDetails->option)
+				{
+					$optionVal = array();
+
+					foreach ($optionArray as $options)
+					{
+						$optionVal[] = $options->value;
+					}
+				}
+
+				$format				= new stdClass;
+				$format->id			= $colK;
+				$format->name		= $colV;
+				$format->type		= ($tempKetDetails->type == "relateditemspro" || $tempKetDetails->type == "radio") ? "autocomplete" : "text";
+				$format->readOnly	= in_array($colK, $colReadOnly_keys);
+				$format->primary	= ($colK == 'zooid' ? 1 : 0);
+				$format->defaultCol	= in_array($colK, $defaultColumns);
+				$format->option		= $optionVal;
+
+				$myfinalArrayy[]	= $format;
+			}
+
+			/*
 			$finalReturn['colProperties']	= $colProperties_array;
 			$finalReturn['colFields']		= $columns_array;
 			$finalReturn['colIds']			= $columnsId_array;
 			$finalReturn['colName']			= $columnsName_array;
+			*/
 		}
 		else
 		{
 			die("Type file not found");
 		}
 
-		$this->plugin->setResponse($finalReturn);
+		$this->plugin->setResponse($myfinalArrayy);
+	}
+
+	/**
+	 * colProperties function to set column properties
+	 * like read-only
+	 *
+	 * @param   Object  $value  field valuevalue data
+	 * 
+	 * @return  Object  $rtrObk  Object of col.
+	 *
+	 * @since  3.0
+	 **/
+	public function correctFormat($value)
+	{
+		echo "<pre>";
+		print_r($value);
+		die;
 	}
 
 	/**

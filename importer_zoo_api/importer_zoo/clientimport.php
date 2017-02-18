@@ -39,7 +39,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 	 * POST function unnecessary
 	 *
 	 * @return  STRING  error message
-	 * 
+	 *
 	 * @since  3.0
 	 **/
 	public function post()
@@ -54,6 +54,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 		$this->records	= json_decode($records);
 		$this->batch	= json_decode($batch);
 		$newIds			= array();
+		$invalid			= array();
 
 		$type			= $this->batch->params->type;
 		$filePath		= JPATH_SITE . '/media/zoo/applications/blog/types/' . $type . '.config';
@@ -75,28 +76,36 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 			}
 
 			// Save function call
-			$newId = $this->saveRec($record);
-			$record->recordid = $newId;
-			$record->id = $newId;
+			$saveStatus = $this->saveRec($record);
+
+			$record->id = $record->zooid = ($saveStatus['id'] ? $saveStatus['id'] : '');
 
 			$newIds[] = $record;
+			$invalid[$record->tempId] = $saveStatus['invalid'];
 		}
 
-		$this->plugin->setResponse($newIds);
+		$rtrArray = array ('records' => $newIds, 'invalid' => $invalid);
+
+		$this->plugin->setResponse($rtrArray);
 	}
 
 	/**
 	 * POST function unnecessary
 	 *
 	 * @param   Object  $recordDetails  Single record data
-	 * 
+	 *
 	 * @return  STRING  error message
-	 * 
+	 *
 	 * @since  3.0
 	 **/
 	public function saveRec($recordDetails)
 	{
-		if (!$recordDetails->recordid)
+		if ($this->zapp->alias->item->checkAliasExists($recordDetails->alias, $recordDetails->zooid))
+		{
+			return array('id' => $recordDetails->zooid, 'invalid' => array('alias'));
+		}
+
+		if (!$recordDetails->zooid)
 		{
 			$item 	= $this->zapp->object->create('Item');
 
@@ -107,6 +116,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 			$item->type = $this->batch->params->type;
 
 			$item->created = $this->zapp->date->create()->toSQL();
+			$item->modified = $this->zapp->date->create()->toSQL();
 			$item->publish_up = $this->zapp->date->create()->toSQL();
 			$item->created_by = $this->user->id;
 
@@ -117,7 +127,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 		}
 		else
 		{
-			$item	= $this->zapp->table->item->get($recordDetails->recordid);
+			$item	= $this->zapp->table->item->get($recordDetails->zooid);
 			$item->modified		= $this->zapp->date->create()->toSQL();
 			$item->modified_by	= $this->user->id;
 		}
@@ -156,6 +166,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 			->set('config.primary_category', (int) $recordDetails->category);
 
 		$riProEleData = array();
+		$imgpresent = 0;
 
 		foreach ($item->getElements() as $id => $element)
 		{
@@ -202,6 +213,17 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 					$arr[0]['value'] = $stripSlashValue;
 					$element->bindData($arr);
 					break;
+				case 'date':
+					$arr = array();
+					$stripSlashArr = explode("|", $stripSlashValue);
+
+					foreach ($stripSlashArr as $impKey => $impVal)
+					{
+						$arr[0]['value'] = JHtml::date($impVal, 'Y-m-d H:i:s');
+					}
+
+					$element->bindData($arr);
+					break;
 				case 'imagepro':
 					$img_ele = array();
 					$images = explode('|', $stripSlashValue);
@@ -209,6 +231,13 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 
 					foreach ($images as $img)
 					{
+						$img = trim($img);
+
+						if (!empty($img))
+						{
+							$imgpresent = 1;
+						}
+
 						$img_ele[] = array('file' => $img,
 											'title' => '',
 											'file2' => '',
@@ -229,238 +258,67 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 					$riProEleData[$id] = $recordDetails->$id;
 					$element->bindData();
 					break;
-				case 'date':
-					$arr = array();
-					$arr[0]['value'] = (($recordDetails->$id) ? $recordDetails->$id . " 18:30:00" : '');
-					$element->bindData($arr);
-					break;
 			}
 		}
 
-		$this->zapp->table->item->save($item);
-		$this->zapp->category->saveCategoryItemRelations($item, array((int) $recordDetails->category));
-
-		// Save for image resizing
-		$this->helper->insertResizeImageRecord($this->batch->id, $item->id);
-
-		$riProEleDataFiltered = array_filter($riProEleData);
-
-		if (!empty($riProEleDataFiltered))
-		{
-			foreach ($riProEleDataFiltered as $fieldK => $fieldV)
-			{
-				$cFieldV = explode("|", $fieldV);
-				$cFieldV = implode('","', $cFieldV);
-
-				$query_field = $this->dbo->getQuery(true);
-				$query_field	->select('id')
-								->from('#__zoo_item')
-								->where('alias in ("' . $cFieldV . '")');
-				$this->dbo->setQuery($query_field);
-				$ids = $this->dbo->loadColumn();
-
-				if (!empty($ids))
-				{
-					if ($recordDetails->recordid)
-					{
-						$query_field = $this->dbo->getQuery(true);
-						$query_field	->delete('#__zoo_relateditemsproxref')
-										->where('item_id = ' . $recordDetails->recordid . ' AND element_id="' . $fieldK . '"');
-						$this->dbo->setQuery($query_field);
-						$this->dbo->query();
-					}
-
-					foreach ($ids as $iid)
-					{
-						$idsVal[] = "({$iid}, {$item->id}, '{$fieldK}')";
-					}
-
-					$chekcingStr = implode(',', $idsVal);
-
-					$insertQuery	= "INSERT INTO #__zoo_relateditemsproxref (ritem_id, item_id, element_id) VALUES {$chekcingStr}";
-
-					$this->dbo->setQuery($insertQuery);
-					$this->dbo->query();
-				}
-			}
-		}
-
-		return $item->id;
-	}
-
-	/**
-	 * POST function unnecessary
-	 *
-	 * @param   Object  $recordDetails  Single record data
-	 * 
-	 * @return  STRING  error message
-	 * 
-	 * @since  3.0
-	 **/
-/*	public function saveNew($recordDetails)
-	{
-		$newItem 	= $this->zapp->object->create('Item');
-
-		Set blog as zoo application
-		$newItem->application_id = 1;
-
-		Set item type from batch details
-		$newItem->type = $this->batch->params->type;
-
-		Set item name and alias
-		$newItem->name	= $recordDetails->name;
-		$newItem->alias	= $recordDetails->alias;
-
-		By default publish state
-		$newItem->state	= 1;
-
-		$newItem->created = $this->zapp->date->create()->toSQL();
-		$newItem->publish_up = $this->zapp->date->create()->toSQL();
-
-		if ($this->zapp->joomla->version->isCompatible('1.6') && $item->access == 0)
-		{
-			$newItem->access = $this->zapp->joomla->getDefaultAccess();
-		}
-
-		$riProEleData = array();
-
-		foreach ($newItem->getElements() as $id => $element)
-		{
-			$type	= $this->decodeElements[$id]->type;
-			$opt	= array();
-
-			switch ($type)
-			{
-				case 'text':
-					$arr = array();
-					$arr[0]['value'] = $recordDetails->$id;
-					$element->bindData($arr);
-				break;
-				case 'radio':
-					$arr = array();
-					$opt['option'][0] = $recordDetails->$id;
-					$element->bindData($opt);
-					break;
-				case 'select':
-					if ($this->decodeElements[$id]->multiple)
-					{
-						$impData = array();
-						$proarr = array();
-						$impData = array_map('trim', explode('|', $recordDetails->$id));
-
-						foreach ($impData as $impKey => $impVal)
-						{
-							$opt['option'][$impKey] = $impVal;
-						}
-					}
-					else
-					{
-						$proarr = array();
-						$opt['option'][0] = $recordDetails->$id;
-					}
-
-					$element->bindData($opt);
-
-					break;
-				case 'textarea':
-					$arr = array();
-					$arr[0]['value'] = $recordDetails->$id;
-					$element->bindData($arr);
-					break;
-				case 'imagepro':
-					$img_ele = array();
-					$images = explode('|', $recordDetails->$id);
-					$i = 0;
-
-					foreach ($images as $img)
-					{
-						$img_ele[] = array('file' => $img,
-											'title' => '',
-											'file2' => '',
-											'spotlight_effect' => '',
-											'caption' => ''
-											);
-						$i++;
-					}
-
-					$element->bindData($img_ele);
-					break;
-				case 'country':
-					$arr = array();
-					$arr['country'][0] = $recordDetails->$id;
-					$element->bindData($arr);
-					break;
-				case 'relateditemspro':
-					$riProEleData[$id] = $recordDetails->$id;
-					$element->bindData();
-						break;
-				case 'date':
-					$arr = array();
-					$arr[0]['value'] = $recordDetails->$id . " 18:30:00";
-					$element->bindData($arr);
-					break;
-			}
-		}
 		try
 		{
-			// book-rr2-0550128-1|book-rr2-0550513-1|book-rr2-0541804-1|book-rr2-0548755-1
+			$this->zapp->table->item->save($item);
+			$this->zapp->category->saveCategoryItemRelations($item, array((int) $recordDetails->category));
 
-			$this->zapp->table->item->save($newItem);
+			// Save for image resizing
+			$this->helper->insertResizeImageRecord($this->batch->id, $item->id, $imgpresent);
+
+			$riProEleDataFiltered = array_filter($riProEleData);
+
+			if (!empty($riProEleDataFiltered))
+			{
+				foreach ($riProEleDataFiltered as $fieldK => $fieldV)
+				{
+					$idsVals	= array();
+					$idsVal		= array();
+					$cFieldV	= explode("|", $fieldV);
+					$cFieldV	= implode('","', $cFieldV);
+
+					$query_field = $this->dbo->getQuery(true);
+					$query_field	->select('id')
+									->from('#__zoo_item')
+									->where('alias in ("' . $cFieldV . '")');
+					$this->dbo->setQuery($query_field);
+					$ids = $this->dbo->loadColumn();
+
+					if (!empty($ids))
+					{
+						if ($recordDetails->zooid)
+						{
+							$query_field = $this->dbo->getQuery(true);
+							$query_field	->delete('#__zoo_relateditemsproxref')
+											->where('item_id = ' . $recordDetails->zooid . ' AND element_id="' . $fieldK . '"');
+							$this->dbo->setQuery($query_field);
+							$this->dbo->query();
+						}
+
+						foreach ($ids as $iid)
+						{
+							$idsVals[] = "({$iid}, {$item->id}, '{$fieldK}')";
+						}
+
+						$idsVal			= array_unique($idsVals);
+						$chekcingStr	= implode(',', $idsVal);
+
+						$insertQuery	= "INSERT INTO #__zoo_relateditemsproxref (ritem_id, item_id, element_id) VALUES {$chekcingStr}";
+
+						$this->dbo->setQuery($insertQuery);
+						$this->dbo->query();
+					}
+				}
+			}
+
+			return array('id' => $item->id, 'invalid' => null);
 		}
 		catch (Exception $e)
 		{
-			echo $e;
+			return array('id' => $item->id, 'invalid' => 1);
 		}
-
-		return $newItem->id;
 	}
-*/
-
-	/*
-	public function saveNewDuplicate($recordDetails)
-	{
-		$postRecord = array();
-
-		$this->jinput->set('name', $recordDetails->name);
-		$this->jinput->set('alias', $recordDetails->alias);
-
-		$itemCon	= new ItemController($this->zapp);
-		$itemCon->save();
-		ItemController::save();
-
-		$postRecord['name']			= $recordDetails->name;
-		$postRecord['alias']		= $recordDetails->alias;
-		$postRecord['state']		= ($recordDetails->state) ? $recordDetails->state : 0;
-		$postRecord['searchable']	= 1;
-
-		$postRecord['params']['enable_comments']	= 1;
-		$postRecord['params']['primary_category']	= 0;
-
-		$postRecord['params']['metadata']['title'] = '';
-		$postRecord['params']['metadata']['description'] = '';
-		$postRecord['params']['metadata']['keywords'] = '';
-		$postRecord['params']['metadata']['robots'] = '';
-		$postRecord['params']['metadata']['author']	= '';
-
-
-		$postRecord['frontpage']		= 0;
-		$postRecord['categories'][0]	=
-		$postRecord['type']				= $this->batch->params->type;
-		$postRecord['created_by']		= $this->user->id;
-
-		$postRecord['details']['created_by_alias']	= '';
-		$postRecord['details']['created']			= '';
-		$postRecord['details']['access']			= 1;
-		$postRecord['details']['publish_up']		= '';
-		$postRecord['details']['publish_down']		= 'Never';
-
-		$postRecord['access']		= 1;
-		$postRecord['publish_up']	= '';
-		$postRecord['publish_down'] = 'Never';
-
-		echo "<pre>";
-		print_r($recordDetails);
-		die;
-	}
-*/
 }
