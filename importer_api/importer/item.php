@@ -63,6 +63,7 @@ class ImporterApiResourceItem extends ApiResource
 				$tempItems[$id]				= json_decode($item->data);
 				$tempItems[$id]->tempId		= $item->id;
 				$importerInvalidItems[]		= $item->invalid_columns;
+				$importervalidatedItems[]	= $item->validated;
 			}
 
 			$finReturn = array(	'items' => $tempItems,
@@ -76,7 +77,8 @@ class ImporterApiResourceItem extends ApiResource
 		else
 		{
 			$items_model->setState('filter.batch_id', $batch_id);
-			$importerItems		= $items_model->getItems();
+
+			// $importerItems		= $items_model->getItems();
 			$importerItemsTotal	= $items_model->getTotal();
 
 			$itemsModelValidated 	= JModelLegacy::getInstance('items', 'ImporterModel');
@@ -121,6 +123,7 @@ class ImporterApiResourceItem extends ApiResource
 		$jinput		= JFactory::getApplication()->input;
 		$records	= (array) json_decode($jinput->get('records', '', 'RAW'));
 		$batch		= (array) json_decode($jinput->get('batchDetails', '', 'STRING'));
+		$db			= JFactory::getDbo();
 
 		$invalidDataStr			= $jinput->get('invalidData', '', 'STRING');
 		$importedRecStatus		= $jinput->get('imported', false, 'BOOLEAN');
@@ -154,9 +157,34 @@ class ImporterApiResourceItem extends ApiResource
 
 		foreach ($records as $index => $record)
 		{
+			$testRecord		= (array) $record;
+			$removeRecordId = $testRecord['tempId'];
+
+			unset($testRecord['tempId']);
+
+			// Condition to remove empty records from temp table
+			if (empty(array_filter($testRecord)) && $removeRecordId)
+			{
+				$query = $db->getQuery(true);
+
+				// Delete empty records.
+				$conditions = array(
+					$db->quoteName('id') . ' = ' . $removeRecordId
+				);
+
+				$query->delete($db->quoteName('#__importer_items'));
+				$query->where($conditions);
+
+				$db->setQuery($query);
+
+				$result = $db->execute();
+				continue;
+			}
+
 			$record = (array) $record;
 			$JForm = array();
 
+			// Condition to update or add non-empty records to temp table
 			if (!empty(array_filter($record)))
 			{
 				if (isset($record['tempId']))
@@ -184,6 +212,17 @@ class ImporterApiResourceItem extends ApiResource
 				$JForm['validated'] = 0;
 
 				$tempId				= $this->saveTemp($JForm);
+
+				// Condition to update Id and tempId in data column
+				if ($tempId)
+				{
+					$record['tempId']	= $tempId;
+					$JForm['data']		= json_encode($record);
+					$JForm['id']		= $tempId;
+
+					$this->saveTemp($JForm);
+				}
+
 				$tempKeys[$index]	= $tempId;
 			}
 		}
@@ -202,9 +241,9 @@ class ImporterApiResourceItem extends ApiResource
 	 **/
 	public function saveTemp($JForm)
 	{
-		$item_model		= JModelLegacy::getInstance('item', 'ImporterModel');
-		$item_model->save($JForm);
+		$this->item_model		= JModelLegacy::getInstance('item', 'ImporterModel');
+		$this->item_model->save($JForm);
 
-		return $item_model->getState("item.id");
+		return $this->item_model->getState("item.id");
 	}
 }

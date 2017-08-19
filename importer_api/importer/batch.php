@@ -77,11 +77,16 @@ class ImporterApiResourceBatch extends ApiResource
 		$postData 		= $app->input->getArray();
 		$formData 		= $postData['JForm'];
 		$currentTime	= new JDate('now');
+		$saveDataArr	= array();
 
-		if (isset($formData['id']))
+		if ($formData['id'])
 		{
 			$formData['start_id'] = null;
 			$formData['updated_date'] = $currentTime->__toString();
+
+			unset($formData['params']['fetchall']);
+
+			$formData['params'] = json_encode($formData['params'], JSON_FORCE_OBJECT);
 		}
 		else
 		{
@@ -90,13 +95,15 @@ class ImporterApiResourceBatch extends ApiResource
 
 		$formData['start_id'] = trim(str_replace("\n", ",", $formData['start_id']), ",");
 
+		$formData['id'] = (int) $formData['id'];
+
 		if ($item_model->save($formData))
 		{
 			$this->plugin->setResponse($item_model->getState("batch.id"));
 		}
 		else
 		{
-			$this->plugin->setResponse(false);
+			$this->plugin->setResponse("not updated");
 		}
 	}
 }
