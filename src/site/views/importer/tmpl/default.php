@@ -14,12 +14,15 @@ $doc = JFactory::getDocument();
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/handsontable.full.css');
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/sweetalert.css');
 $doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/style.css');
+$doc->addStyleSheet(JURI::Base() . 'components/com_importer/assets/css/vendor/chosen.css');
+//~ $doc->addStyleSheet(JURI::Base() . 'modules/mod_gridfilters/assets/chosen/chosenOverride.css');
 
 $doc->addScript('https://code.jquery.com/jquery-1.12.4.js');
 
 $doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/handsontable.full.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/sweetalert-dev.js');
-$doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.min.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/vendor/chosen.js');
+$doc->addScript(JURI::base().'components/com_importer/assets/js/importerService.js');
 $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 ?>
 
@@ -36,13 +39,12 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 	</div>
 	
 	<div>
-		<button id="add-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to add records">Add Data</button>
-		<button id="edit-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to edit records">Edit Data</button>
-
-		<button type="button" id="load-batch" class="btn demo-btns btn-secondary" onclick="importerUi.showModalFirst(this);" >Load Batch</button>
+		<button id="add-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to Add records">Add Data</button>
+		<button id="edit-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to Edit records">Edit Data</button>
+		<button id="export-data" class="btn demo-btns btn-secondary btn-modal-1" onclick="importerUi.showModalFirst(this);" modal-title-set="Select batch details to Export records">Export Data</button>
+		<button id="load-batch" class="btn demo-btns btn-secondary" onclick="importerUi.showModalFirst(this);" >Load Batch</button>
 
 		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" disabled>Delete Data</button>
-		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" disabled>Export Data</button>
 		<button type="button" class="btn demo-btns btn-secondary" data-toggle="modal" disabled>Edit Tags</button>
 	</div>
 
@@ -59,14 +61,11 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 				</div>
 
 				<div class="modal-footer" id="modal-footer-1">
-				  <button type="button" class="btn btn-default" for="step-one-model" onclick="importerUi.dismissModal(this)">Close</button>
+				  <button type="button" class="btn" for="step-one-model" onclick="importerUi.dismissModal(this)">Close</button>
 				</div>
 		  </div>
 		</div>
 	</div>
-
-
-
 
 	<div class="modal fade" id="load-batch-model" role="dialog" data-backdrop="static" data-keyboard="false" style="display:none;">
 		<div class="modal-dialog">
@@ -78,10 +77,11 @@ $doc->addScript(JURI::base().'components/com_importer/assets/js/importerUi.js');
 				</div>
 
 				<div class="modal-body" id="load-batch-content">
+					<div class="loading-img-importer">Loading...<img src="modules/mod_autosuggest_search/image/loading.gif"></img></div>
 				</div>
 
 				<div class="modal-footer" id="modal-footer-2">
-				  <button type="button" class="btn btn-default" for="load-batch-model" onclick="importerUi.dismissModal(this)">Close</button>
+				  <button type="button" class="btn" for="load-batch-model" onclick="importerUi.dismissModal(this)">Close</button>
 				</div>
 		  </div>
 		</div>

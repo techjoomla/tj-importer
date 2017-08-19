@@ -8526,7 +8526,9 @@ var onBeforeKeyDown = function(event) {
     if (rowToSelect < 0 || (innerHOT.flipped && rowToSelect > innerHOT.countRows() - 1)) {
       innerHOT.deselectCell();
     } else {
-      innerHOT.selectCell(rowToSelect, 0);
+      //innerHOT.selectCell(rowToSelect, 0);
+      // Hacked by sushan for quickfix
+      innerHOT.selectCell(rowToSelect, (innerHOT.countCols() - 1));
     }
     if (innerHOT.getData().length) {
       event.preventDefault();

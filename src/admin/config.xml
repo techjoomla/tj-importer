@@ -8,7 +8,7 @@
 			description="COM_IMP_POST_FETCH_BATCH_SIZE_DES"
 			default="10"
 			min="5"
-			max="25"
+			max="200"
 		/>
 		<!--
 		<field
