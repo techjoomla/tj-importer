@@ -69,6 +69,7 @@ class ImporterViewImporter extends JViewLegacy
 
 		$this->clientApp	= $jinput->get('clientapp', '', 'STRING');
 		$this->batchId		= $jinput->get('batch_id', '', 'INT');
+		$this->fetchall		= $jinput->get('fetchall', 0, 'INT');
 		$this->userId		= $user->id;
 		$this->userName		= $user->name;
 

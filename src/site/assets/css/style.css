@@ -27,6 +27,7 @@ div.modal
 	margin: 1rem 0 1rem;
 	overflow: hidden;
 	border-right: 1px solid #000;
+	border-bottom: 1px solid #000;
 }
 .fadded
 {
@@ -58,11 +59,310 @@ div.modal
 {
 	background-color: #00bfff !important;
 }
-#step1 div
+#step1 > div
 {
-	padding : 3px;
+	padding : 5px;
 }
 .main-box .progress
 {
 	height : 7px;
 }
+.htSelectEditorDemo
+{
+	z-index: 9;
+}
+.chosen-container
+{
+	position : absolute;
+//	z-index	: 2;
+	top:0;
+}
+
+.modal-body .chosen-container .chosen-drop
+{
+	z-index:9;
+}
+label.radio-label
+{
+	display:inline-block !important;
+}
+#filterDiv > span
+{
+	margin-right: 20px;
+}
+#filterDiv > span > input[type="radio"]
+{
+	margin-top : 0;
+	margin-right: 5px;
+}
+
+td .chosen-container.chosen-container-multi
+{
+	position : relative;
+	min-width: auto;
+    max-width: 460px;
+}
+
+.chosen-container-multi .chosen-choices
+{
+	border : none;
+	float: left;
+    width: 97%;
+}
+
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable
+{
+	min-width:150px;
+	min-height:74px;
+}
+
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable .wtHolder
+{
+	min-width:150px;
+/*
+	min-height: 88px !important;
+*/
+}
+
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable table.htCore,
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable .wtHider
+{
+	min-width:150px;
+}
+
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable table.htCore tbody tr td
+{
+	display:block;
+/*
+	min-width:150px;
+	width:100%;
+*/
+}
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable table.htCore tbody tr td:nth-child(3) {
+    border-bottom: 1px solid black;
+/*
+    width:125%;
+*/
+}
+.chosen-container-multi .chosen-choices.chosen-invalid-choice
+{
+	background-color : #CEC;
+	background-image : none;
+}
+.chosen-container-multi .chosen-choices li.search-choice.invalid-choice
+{
+	background-color : #faa1a1;
+	background-image : none;
+	font-weight : 600;
+}
+.handsontable input, .handsontable textarea {
+    min-height: initial;
+    max-width: 460px !important;
+}
+.handsontable td .htAutocompleteArrow {
+    color: #777;
+    width: 1%;
+}
+
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable table.htCore
+{
+	table-layout : auto;
+}
+
+td.customListBox {
+    white-space: inherit !important;
+    text-overflow: initial !important;
+    word-wrap: break-word !important;
+    height: auto !important;
+}
+td.customListBox:first-child{
+  display:initial !important;
+   margin: 0 0 10px 0 !important;
+}
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable .wtHider
+{
+	width : auto !important;
+}
+
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable table.htCore tbody tr td:nth-child(2)
+{
+	border-bottom: 1px solid #D8D8D8;
+	border-top: 1px solid #D8D8D8;
+}
+.repHandsontableVal
+{
+	max-width: 150px;
+}
+.setMaxWidth
+{
+	max-width: 300px;
+}
+.repHandsontableVal > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    width: 80%;
+}
+.handsontable td .repHandsontableVal .htAutocompleteArrow {
+	background: #0174DF;
+    width: 25px;
+    color: #fff;
+    margin-top: 3px;
+    font-weight:600;
+}
+
+.handsontable th, .handsontable td
+{
+	max-width : 350px;
+}
+
+.switch-main-cover{
+	display: inline-block;
+    margin: 0 10px;
+    vertical-align: middle;
+    padding:5px 5px 0px 0;
+    border:solid 1px #ccc;
+    }
+.switch-cover{float:left;padding:2px 5px;}
+
+/* CSS FOR CATEGORY ID EKTA */
+.class-def-values, .defaultDivCover{
+	margin: 35px 0 0 5px;
+    border: solid 1px #ccc;
+    width: 54%;
+}
+
+.class-def-values .switch-main-cover, .defaultDivCover span{
+    float: left;
+    width: auto;
+    background: #fff;
+    font-weight: bold;
+    font-size: 15px;
+	margin: -20px 0 14px 20px;
+    padding:5px 9px 2px 5px;
+}
+.defaultDivCover span{margin: -17px 0 7px 20px;}
+.defaultDivCover span:after{content:"Default Values"}
+
+.class-def-values .defaultValFields, .defaultDivCover div{
+    clear: both;
+    margin: 10px;
+}
+.defaultDivCover div{ margin:10px 10px 10px 27px;}
+
+.class-def-values .switch-main-cover .switch-cover{float:left;}
+
+/**************/
+.handson-images
+{
+	max-width: 100px;
+    max-height: 100px;
+    padding-bottom : 5px;
+}
+
+
+/* The switch - the box around the slider */
+label.switch {
+  position: relative;
+  display: inline-block !important;
+  width: 54px;
+  height: 27px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {display:none;}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 19px;
+  width: 19px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.disable-div .defaultValFields
+{
+	display:none;
+}
+
+
+/*
+.customAutocompleteEditor, .customAutocompleteEditor .wtHolder{
+ height: 370px !important;
+}
+*/
+
+/*
+.customAutocompleteEditor .wtHider{
+  z-index:999 !important;
+}
+*/
+/*
+.customAutocompleteEditor .wtHolder {
+    overflow: scroll;
+    z-index: 999999;
+}
+*/
+/*
+.handsontableEditor.autocompleteEditor.AutocompleteEditor.customAutocompleteEditor.listbox.handsontable table.htCore tbody tr td:last-child{
+    display:inherit !important;
+}
+*/
+/*
+.handsontable.listbox td.htDimmed {
+    display: initial !important;
+}
+*/
+/*
+{
+*/
+/*
+	display:block;
+*/
+/*
+	border-bottom: 1px solid red;
+*/
+/*
+}
+*/

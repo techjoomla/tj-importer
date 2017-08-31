@@ -26,27 +26,41 @@ var importerService = {
 			return batchesList;
 		},
 
-	getFieldList : function (typeSelected, fieldSelected = ''){
+	getFieldList : function (typeSelected, fieldSelected, defaultValFields){
 			var	clientApp	=  this.clientApp ;
 
 			var clientColumns = jQuery.ajax({
 					type: "GET",
 					url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientcolumns&format=raw&type=" + typeSelected,
-					data : {fields : fieldSelected},
+					data : {fields : fieldSelected, defValFields : defaultValFields},
 					headers: {'x-auth':'session'}
 				});
-			
+
 			return clientColumns;
 		},
 
-	getRecordsList : function(type, columns, ids)
+	getFetchOptions : function()
+		{
+			var	clientApp	=  this.clientApp ;
+
+			var clientOptions = jQuery.ajax({
+					type: "GET",
+					url: "index.php?option=com_api&app=importer_" + clientApp + "&resource=clientoptions&format=raw",
+					data : {type : jQuery("select#typeList").val()},
+					headers: {'x-auth':'session'}
+				});
+
+			return clientOptions;
+		},
+
+	getRecordsList : function(batchparams, columns, ids, startPoint, countall)
 		{
 			var	clientApp	=  this.clientApp ;
 
 			var clientRecords = jQuery.ajax({
 					type: "POST",
 					url: "index.php?option=com_api&app=importer_" + clientApp + "&resource=clientrecords&format=raw",
-					data : {type: type, fields : columns, ids : ids},
+					data : {'batchparams': batchparams, 'fields' : columns, 'ids' : ids, 'startPoint':startPoint, 'countall' : importerUi.countall, 'limit' : importerUi.fetchItemSize},
 					headers: {'x-auth':'session'}
 				});
 
@@ -77,12 +91,12 @@ var importerService = {
 			return tempRecords;
 		},
 
-	getSuggestions : function(queryValue)
+	getSuggestions : function(queryValue, queryProp)
 		{
 			let suggestions = jQuery.ajax({
 						type: "GET",
 						url: "index.php?option=com_api&app=importer_" + this.clientApp + "&resource=clientsuggestions&format=raw",
-						data : {query : queryValue},
+						data : {query : queryValue, batchType : importerUi.batchDetails.params.type, fieldId : queryProp},
 						headers: {'x-auth':'session'}
 					});
 
@@ -115,7 +129,6 @@ var importerService = {
 								headers: {'x-auth':'session'}
 							});
 
-			console.log(saveResult);
 			return saveResult;
 		},
 

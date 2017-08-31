@@ -17,11 +17,22 @@ var importerUi = {
 	initialBtnEvent : '',
 	textColorNew : false,
 	batchTempRecords : [],
+	batchImageFields : {},
 	batchClientRecords : [],
+	batchClientRecordsStripped : [],
+	clientFieldNames : [],
 	batchTempInvalid : [],
+	batchTempInvalidFirst : [''],
 	validateTempItems :[],
+	defaultColumnList :[],
 	processStartTime : '',
+	shiftedRow : '',
 	primaryKey		: '',
+	fetchall		: '',
+	countall		: 0,
+	customRendererFields : [],
+	copyHeader	: 0,
+	repFieldDetails : [],
 
 	showModalFirst : function (thiss){
 
@@ -46,6 +57,7 @@ var importerUi = {
 		jQuery(modalBody).html("");
 		jQuery("#fieldButton").remove();
 		jQuery(eventForr).modal('hide');
+		//console.log(repHandsontable);
 	},
 
 	getBatchesList : function(clientApp)
@@ -61,7 +73,6 @@ var importerUi = {
 			function() {
 				let batchesInfo	= jQuery.parseJSON(promise.responseText);
 				importerUi.showBatchesList(batchesInfo);
-
 				return;
 			}
 		);
@@ -69,16 +80,21 @@ var importerUi = {
 
 	showErrorBox : function (errMsg, functionName, param1 = 0, param2 = 0, param3 = 0, param4 = 0)
 	{
+		if (!errMsg)
+		{
+			return;
+		}
+
 		var displayErrorMsg = Joomla.JText._('COM_IMP_DEFAULT_ERROR_DESC');
 
-		if (errMsg.status)
+		if (errMsg && errMsg.status)
 		{
 			displayErrorMsg = errMsg.status + " " + errMsg.statusText;
 		}
 
-		if (errMsg.status == 502 && (importerUi.trialCall <= importerUi.trialCallLimit) && functionName != '')
+		if (errMsg && errMsg.status == 502 && (importerUi.trialCall <= importerUi.trialCallLimit) && functionName != '')
 		{
-			console.log(importerUi.trialCall + "  fun name - " + functionName);
+			//console.log(importerUi.trialCall + "  fun name - " + functionName);
 			importerUi.trialCall++;
 
 			switch (functionName)
@@ -131,6 +147,7 @@ var importerUi = {
 
 	showBatchesList : function (batchesInfo)
 	{
+		jQuery(".loading-img-importer").show();
 		var batchesHtml = jQuery("<div></div>").attr("id", "batches-div");
 
 		if(batchesInfo.totalBatches)
@@ -159,6 +176,7 @@ var importerUi = {
 
 			jQuery('#load-batch-content').append(infoDiv);
 			jQuery('#load-batch-content').append(batchesTable);
+			jQuery(".loading-img-importer").hide();
 		}
 		else
 		{
@@ -167,6 +185,22 @@ var importerUi = {
 			jQuery('#load-batch-content').append(infoDiv);
 		}
 
+	},
+
+	registerChosen : function(selectObject, callback = ''){
+		
+		if(callback){
+			jQuery(".select-box-for-chosen", selectObject).chosen({width: "250px", allow_single_deselect:true}).on('change', callback);
+		}else{
+			jQuery(".select-box-for-chosen", selectObject).chosen({width: "250px", allow_single_deselect:true});
+		}
+
+			jQuery('.select-box-for-chosen', selectObject).on('chosen:showing_dropdown', function(evt, params) {
+				if(jQuery("#step1").height() < jQuery(".chosen-drop", selectObject).height())
+				{
+					jQuery("#step1").height(jQuery("#step1").height() + jQuery(".chosen-drop", selectObject).height());
+				}
+			  });
 	},
 
 	step1 : function(){
@@ -188,30 +222,36 @@ var importerUi = {
 
 				if(Object.keys(clientTypesObj).length > 1){
 					let typeDropDown	= importerUi.createDropDownList(Joomla.JText._('COM_IMP_BATCH_TYPES_LABEL'), 'JForm["typeList"]', '', 'typeList', clientTypesObj, false, true);
+					importerUi.registerChosen(typeDropDown, importerUi.appendFieldList);
+					//typeDropDown.on('change', importerUi.appendFieldList);
 
-					typeDropDown.on('change', importerUi.appendFieldList);
 					jQuery("#step1").append(typeDropDown);
 				}else{
 					importerUi.appendFieldList('', Object.keys(clientTypesObj)[0]);
 				}
+
 			}
 		);
 	},
 
-	appendFieldList : function (event, singleType=''){
-			
+	appendFieldList : function (event, singleType){
+
 			let typeSelected	= (event) ? jQuery("option:selected", this).val() : singleType;
+
+			jQuery("#fieldListDiv").remove();
+			jQuery(".fieldButton").remove();
+			jQuery("#idTextAreaDiv").remove();
+			jQuery(".radio-div").remove();
+			jQuery(".fetchoptions").remove();
+			jQuery(".class-def-values").remove();
 
 			if (typeSelected == '' && event)
 			{
-				jQuery("#fieldListDiv").remove();
-				jQuery(".fieldButton").remove();
-				jQuery("#idTextAreaDiv").remove();
 				return;
 			}
 
 			importerUi.showProgress("Please wait..", 50);
-			let promise			= importerService.getFieldList(typeSelected);
+			let promise			= importerService.getFieldList(typeSelected, '', '');
 
 			promise.fail(
 				function() {
@@ -224,29 +264,127 @@ var importerUi = {
 
 					var clientFieldsObject = {};
 
+					var defFieldsArr = [];
+
 					for(i=0 ; i < clientFieldsObj.length; i++ )
 					{
 						clientFieldsObject[clientFieldsObj[i].id] = clientFieldsObj[i].name;
+
+						if (clientFieldsObj[i].defaultCol)
+						{
+							importerUi.defaultColumnList.push(clientFieldsObj[i].id);
+						}
+
+						if(clientFieldsObj[i].hasOwnProperty('defaultVal') && importerUi.initialBtnEvent == 'add-data')
+						{
+							let batchNameBox = importerUi.createTextbox(clientFieldsObj[i].name, clientFieldsObj[i].id , 'defaultValFields', '', '')
+							
+							if(clientFieldsObj[i].defaultVal)
+							{
+								jQuery("input[type=text]", batchNameBox).val(clientFieldsObj[i].defaultVal);
+							}
+							
+							defFieldsArr.push(batchNameBox);
+						}
+
 					}
 
-					console.log(clientFieldsObject);
+					if(defFieldsArr.length && importerUi.initialBtnEvent == 'add-data')
+					{
+						let defValSwitchButton = importerUi.createSwitch('JForm["switchDefVal"]', 'switchDefVal', 'switchDefVal', 'Use Default Values');
+						jQuery("input[type='checkbox']", defValSwitchButton).prop('checked', true);
 
-					jQuery("#fieldListDiv").remove();
-					jQuery(".fieldButton").remove();
-					jQuery("#idTextAreaDiv").remove();
+						let localDiv = jQuery("<div></div>").attr('class', 'class-def-values');
+						localDiv.append(defValSwitchButton);
 
-					let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton btn .btn-success', 'fieldButton', 'Submit');
-					submitButton.on('click', importerUi.submitBatch);
+						defFieldsArr.forEach(function(element){
+							localDiv.append(element);
+						});
 
-					if(importerUi.initialBtnEvent == 'edit-data'){
+						jQuery("#step1").append(localDiv);
+
+						jQuery("input[type='checkbox']", defValSwitchButton).on('change', function(){
+							jQuery("div.class-def-values").toggleClass(" disable-div ");
+						});
+					}
+
+					if(importerUi.initialBtnEvent == 'edit-data' || importerUi.initialBtnEvent == 'export-data'){
 						let fieldDropDown	= importerUi.createDropDownList(Joomla.JText._('COM_IMP_BATCH_FIELDS_LABEL'), 'JForm["fieldList"]', '', 'fieldList', clientFieldsObject, true);
 						jQuery("#step1").append(fieldDropDown);
-
-						let idTextArea = importerUi.createTextArea(Joomla.JText._('COM_IMP_BATCH_RECORD_SELECTOR_LABEL'), 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
-						jQuery("#step1").append(idTextArea);
+						importerUi.registerChosen(fieldDropDown);
+						
+						let fetchOptionsRadios = importerUi.createRadioButtons('', "Select Option", '', 'radio-div', 'filter');
+						fetchOptionsRadios.on('change',importerUi.renderRecordFetcher);
+						jQuery("#step1").append(fetchOptionsRadios);
+					}
+					else
+					{
+						let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton btn btn-primary', 'fieldButton', 'Submit');
+						submitButton.on('click', importerUi.submitBatch);
+						jQuery("#modal-footer-1").prepend(submitButton);
 					}
 
-					jQuery("#modal-footer-1").append(submitButton);
+					importerUi.doneProgress();
+				}
+			);
+		},
+
+	renderRecordFetcher : function(){
+		let radioVal = jQuery("input[type=radio]:checked", this).val();
+
+		jQuery("#idTextAreaDiv").remove();
+		jQuery(".fieldButton").remove();
+		jQuery(".fetchoptions").remove();
+
+		if (radioVal == 1)
+		{
+			let idTextArea = importerUi.createTextArea(Joomla.JText._('COM_IMP_BATCH_RECORD_SELECTOR_LABEL'), 'JForm["idTextArea"]', '', 'idTextArea', 'Submit');
+			jQuery("#step1").append(idTextArea);			
+		}
+		else
+		{
+			importerUi.showProgress("Please wait..", 50);
+			let fetchOptions = importerUi.fetchOptions();
+		}
+
+		let submitButton = importerUi.createButton('JForm["fieldButton"]', 'fieldButton btn btn-primary', 'fieldButton', 'Submit');
+		submitButton.on('click', importerUi.submitBatch);
+		jQuery("#modal-footer-1").prepend(submitButton);
+
+		return true;
+	},
+
+	fetchOptions : function () {
+			let promise = importerService.getFetchOptions();
+
+			promise.fail(
+				function() {
+					importerUi.showErrorBox(promise);
+				}
+			).done(
+				function() {
+					let clientFetchOptions	= jQuery.parseJSON(promise.responseText);
+					//console.log(clientFetchOptions);
+
+					for(i=0 ; i < clientFetchOptions.length; i++ )
+					{
+						if (typeof(clientFetchOptions[i]) == 'object')
+						{
+							for (var key in clientFetchOptions[i])
+							{
+							  if (clientFetchOptions[i].hasOwnProperty(key))
+							  {
+								// Commented below line so that fetch-all options have preselected values.
+								// let optionDropDown	= importerUi.createDropDownList(key, 'identifierOptions', 'fetchoptions', key, clientFetchOptions[i][key], false, true);
+								let optionDropDown	= importerUi.createDropDownList(key, 'identifierOptions', 'fetchoptions', key, clientFetchOptions[i][key], false, false);
+								jQuery("#step1").append(optionDropDown);
+
+								importerUi.registerChosen(optionDropDown);
+							  }
+							}
+						}
+					}
+
 					importerUi.doneProgress();
 				}
 			);
@@ -256,23 +394,56 @@ var importerUi = {
 			let batchName		= jQuery("#batchName").val();
 			let typeSelected	= jQuery("select#typeList").val();
 			let fieldsSelected	= jQuery("select#fieldList").val();
+
+			let finalFieldList	= fieldsSelected ? importerUi.defaultColumnList.concat(fieldsSelected).unique() : null;
+
 			let recordsSelected = jQuery("#idTextArea").val();
+			let identifierType	= jQuery("input[name=identifiers]:checked").val();
+
+			let defValueSwitch	= jQuery("input[name=switchDefVal]:checked").val();
+			var firlterOptions	= {};
+
+			var defaultValueFields = {};
+
+			if(defValueSwitch)
+			{
+				jQuery(".defaultValFields").each(function() {
+					var thisObj = jQuery('input', this);
+					if(thisObj.val().trim())
+					{
+						defaultValueFields[thisObj.attr('name')] = thisObj.val().trim();
+					}
+				});
+			}
 
 			if(importerUi.initialBtnEvent == 'add-data' && batchName.trim() == '')
 			{
 				swal("Error!", "Please provide batch name", "error");
 				return;
 			}
-			else if (importerUi.initialBtnEvent == 'edit-data')
+			else if (importerUi.initialBtnEvent == 'edit-data' || importerUi.initialBtnEvent == 'export-data')
 			{
 				var errorString = '';
-				
+
 				if (batchName.trim() == '')
 				{
 					errorString += "<br/>Please provide batch name";
 				}
-				
-				if (recordsSelected.trim() == '')
+
+				if (identifierType == '2')
+				{
+					jQuery("select[name=identifierOptions]").each(function(){
+						let thisId = this.id;
+						if (!jQuery("option:selected", this).val())
+						{
+							errorString += "<br/>Please select " + thisId;
+						}
+
+						firlterOptions[thisId] = jQuery("option:selected", this).val();
+
+					});
+				}
+				else if (identifierType == '1' && recordsSelected.trim() == '')
 				{
 					errorString += "<br/>Please provide record identifiers";
 				}
@@ -288,11 +459,21 @@ var importerUi = {
 				}
 			}
 
-			let batchParams	= {
+			var batchParams	= {
 					type:typeSelected,
 					batchAction : importerUi.initialBtnEvent,
-					columns:jQuery.extend({}, fieldsSelected)
+					columns:jQuery.extend({}, finalFieldList)
 				};
+
+			if(Object.keys(defaultValueFields).length > 0 && defaultValueFields.constructor === Object )
+			{
+				batchParams.defaultVals = JSON.stringify(defaultValueFields);
+			}
+
+			if (identifierType == '2')
+			{
+				batchParams.fetchall = firlterOptions;
+			}
 
 			let promise = importerService.saveBatch(batchParams, recordsSelected, batchName);
 
@@ -326,9 +507,29 @@ var importerUi = {
 		},
 
 	getColumns : function(batchDetailsObj){
-			importerService.clientApp = batchDetailsObj.client;
-			importerService.typeSelected = batchDetailsObj.params.type;
-			let promise = importerService.getFieldList(batchDetailsObj.params.type, batchDetailsObj.params.columns);
+
+			console.log("batchDetailsObj", batchDetailsObj);
+
+			importerService.clientApp		= batchDetailsObj.client;
+			importerService.typeSelected	= batchDetailsObj.params.type;
+
+			var myDefValArr = [];
+
+			if(batchDetailsObj.params.hasOwnProperty('defaultVals'))
+			{
+				var parsedDefVals = jQuery.parseJSON(batchDetailsObj.params.defaultVals);
+
+				for (var key in parsedDefVals) {
+				  if (parsedDefVals.hasOwnProperty(key)) {
+					myDefValArr.push(key);
+				  }
+				}
+				
+			}
+			console.log(myDefValArr);
+
+			let promise = importerService.getFieldList(batchDetailsObj.params.type, batchDetailsObj.params.columns, myDefValArr);
+
 			promise.fail(
 				function() {
 					//~ alert(Joomla.JText._('COM_IMP_ERROR_MSG'));
@@ -345,20 +546,69 @@ var importerUi = {
 						if (batchColumnsObj[i].primary)
 						{
 							importerUi.primaryKey = batchColumnsObj[i].id;
-							break;
+						}
+
+						if(batchColumnsObj[i].type == 'image')
+						{
+							importerUi.batchImageFields[batchColumnsObj[i].id] = batchColumnsObj[i];
 						}
 					}
 					// For v1.1 end
 
-					if(batchDetailsObj.start_id){
+					importerUi.fetchall = batchDetailsObj.params.hasOwnProperty('fetchall') && (batchDetailsObj.params.fetchall != '{}');
+
+					if(batchDetailsObj.start_id || batchDetailsObj.params.hasOwnProperty('fetchall')){
 						importerUi.getRecordsClient(batchDetailsObj, batchColumnsObj);
+					}
+					else if(false)
+					{
+						importerUi.getAllRecordsClient(batchDetailsObj, batchColumnsObj);
 					}else{
 						importerUi.getRecordsTemp(batchDetailsObj, batchColumnsObj);
 					}
 				}
 			);
 		},
+/*
+	getAllRecordsClient : function (batchDetailsObj, batchColumnsObj, startPoint = 0, dumbParam1 = 0)
+	{
+		console.log(startPoint);
+		let promise = importerService.getRecordsList(batchDetailsObj.params.type, batchColumnsObj, '', 1, startPoint, importerUi.countall);
 
+		promise.fail(
+				function() {
+					importerUi.showErrorBox(promise, "getRecordsClient", batchDetailsObj, batchColumnsObj, startPoint);
+				}
+			).done(
+				function() {
+					importerUi.trialCall = 0;
+					if(importerUi.countall === null || startPoint < importerUi.countall)
+					{
+						let batchRecordsObject	= jQuery.parseJSON(promise.responseText);
+						let batchRecordsObj		= batchRecordsObject.records;
+						importerUi.countall		= parseInt(batchRecordsObject.allReCount);
+
+
+						let processStartTime = new Date().getTime();
+						importerUi.showEstimatedRemainingTime(startPoint, importerUi.countall, processStartTime);
+
+						if (batchRecordsObj != null)
+						{
+							importerUi.batchClientRecords = importerUi.batchClientRecords.concat(batchRecordsObj);
+						}
+
+						importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), ((startPoint/importerUi.countall) * 100));
+
+						importerUi.getAllRecordsClient(batchDetailsObj, batchColumnsObj, startPoint + importerUi.fetchItemSize);
+					}
+					else
+					{
+						importerUi.loadHandsonView(batchColumnsObj, importerUi.batchClientRecords);
+					}
+				}
+			);
+	},
+*/
 	getRecordsClient : function(batchDetailsObj, batchColumnsObj, startPoint = 0, dumbParam1 = 0){
 
 			// For v1.1 start
@@ -369,19 +619,27 @@ var importerUi = {
 			}
 			// For v1.1 end
 
-			let startIdStr = batchDetailsObj.start_id;
-			let startIdArr = startIdStr.split(',');
-			let startIdCnt = startIdArr.length;
+			var startIdCnt = '';
 
-			let endPoint	= importerUi.fetchItemSize + startPoint;
+			if (importerUi.fetchall)
+			{
+				startIdCnt = importerUi.countall;
+			}
+			else
+			{
+				var startIdStr = batchDetailsObj.start_id;
+				var startIdArr = startIdStr.split(',');
+				startIdCnt = startIdArr.length;
+				
+				var endPoint	= importerUi.fetchItemSize + startPoint;
+				var slicedStartIdArr = startIdArr.slice(startPoint, endPoint);
+				var slicedStartIdStr = slicedStartIdArr.join();
+			}
 
 			let processStartTime = new Date().getTime();
 			importerUi.showEstimatedRemainingTime(startPoint, startIdCnt, processStartTime);
 
-			let slicedStartIdArr = startIdArr.slice(startPoint, endPoint);
-			let slicedStartIdStr = slicedStartIdArr.join();
-
-			let promise = importerService.getRecordsList(batchDetailsObj.params.type, batchColumnsObj, slicedStartIdStr);
+			let promise = importerService.getRecordsList(JSON.stringify(batchDetailsObj.params), batchColumnsObj, slicedStartIdStr, startPoint);
 
 			promise.fail(
 				function() {
@@ -390,13 +648,24 @@ var importerUi = {
 			).done(
 				function() {
 					importerUi.trialCall = 0;
-					if(startPoint < startIdCnt)
+
+					if( (!importerUi.fetchall && startPoint < startIdCnt) || (importerUi.fetchall && startPoint <= importerUi.countall))
 					{
-						let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
+						// Code to strip HTML Tags
+						var regex = /(<([^>]+)>)/ig ;
+						var find = '&amp;';
+						var re = new RegExp(find, 'g');
+						let batchStrippedObject = jQuery.parseJSON(promise.responseText.replace(regex, '').replace(re, '&'));
+						let batchStrippedObj	= batchStrippedObject.records;
+
+						let batchRecordsObject	= jQuery.parseJSON(promise.responseText);
+						let batchRecordsObj		= batchRecordsObject.records;
+						importerUi.countall		= parseInt(batchRecordsObject.allReCount);
 
 						if (batchRecordsObj != null)
 						{
-							importerUi.batchClientRecords = importerUi.batchClientRecords.concat(batchRecordsObj);
+							importerUi.batchClientRecords			= importerUi.batchClientRecords.concat(batchRecordsObj);
+							importerUi.batchClientRecordsStripped	= importerUi.batchClientRecordsStripped.concat(batchStrippedObj);
 						}
 
 						importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), ((startPoint/startIdCnt) * 100));
@@ -424,8 +693,10 @@ var importerUi = {
 					importerUi.trialCall = 0;
 					let batchRecordsObj	= jQuery.parseJSON(promise.responseText);
 
+					//console.log(batchRecordsObj.invalid);
+
 					importerUi.batchTempRecords = importerUi.batchTempRecords.concat(batchRecordsObj.items);
-					importerUi.batchTempInvalid = importerUi.batchTempInvalid.concat(batchRecordsObj.invalid);
+					importerUi.batchTempInvalidFirst = importerUi.batchTempInvalidFirst.concat(batchRecordsObj.invalid);
 					importerUi.validateTempItems = importerUi.validateTempItems.concat(batchRecordsObj.validated);
 					importerUi.checkTempItems = importerUi.checkTempItems.concat(batchRecordsObj.validated);
 
@@ -439,6 +710,7 @@ var importerUi = {
 					}
 					else
 					{
+						importerUi.batchTempInvalid = importerUi.batchTempInvalidFirst;
 						importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_TEMP_RECORDS'), 100);
 						importerUi.loadHandsonView(batchColumnsObj, importerUi.batchTempRecords);
 					}
@@ -448,13 +720,31 @@ var importerUi = {
 			);
 		},
 
+	firstRowRenderer : function (instance, td, row, col, prop, value, cellProperties){
+		    Handsontable.renderers.TextRenderer.apply(this, arguments);
+			td.style.background = '#e2e2e2';
+			td.style.fontWeight = 'bold';
+		},
+
 	invalidRowRenderer : function (instance, td, row, col, prop, value, cellProperties){
+		//console.log(instance);
 		    Handsontable.renderers.TextRenderer.apply(this, arguments);
 
 			if(importerUi.batchTempInvalid[row])
 			{
 				let invaFields		= JSON.parse(importerUi.batchTempInvalid[row]);
-				var invalidArray	=  Object.keys(invaFields).map(function(k) { return invaFields[k] });
+				var invalidArray	=  Object.keys(invaFields).map(function(k)
+																		{
+																			if (typeof(invaFields[k]) === 'string')
+																			{
+																				return invaFields[k];
+																			}
+																			else if (typeof(invaFields[k]) === 'object')
+																			{
+																				let chekcing = invaFields[k];
+																				return Object.keys(chekcing)[0];
+																			}
+																		});
 
 				td.style.background = '#CEC';
 
@@ -466,8 +756,8 @@ var importerUi = {
 				}
 			}
 		},
-
-	ajaxCallFunction : function(query, process){
+/*
+	ajaxCallFunction : function(query='', process){
 
 			var query = query;
 			var queryVal	= query.split("|");
@@ -475,9 +765,9 @@ var importerUi = {
 
 			var displayValue = [queryValue];
 
-			console.log(displayValue);
+			//console.log(displayValue);
 
-			process(query);
+			//process([]);
 
 			if (queryValue.trim() == '')
 			{
@@ -492,138 +782,229 @@ var importerUi = {
 			).done(
 				function() {
 					let suggestions	= jQuery.parseJSON(promise.responseText);
-					process(suggestions);
+					suggestions;
 
-					return;
+					return suggestions;
 				}
 			);
 		},
+*/
+	loadHandsonView : function(batchColumnsObj, batchRecordsObj='')
+	{
 
-	loadHandsonView : function(batchColumnsObj, batchRecordsObj=''){
+		var clientFieldsNames = [];
+		var clientFieldsProps = [];
+		var newclientFieldsNames = {};
 
-			// For v1.1 start
-			var clientFieldsNames = [];
-			var clientFieldsProps = [];
+		for(i=0 ; i < batchColumnsObj.length; i++ )
+		{
+			clientFieldsNames.push(batchColumnsObj[i].name);
+			newclientFieldsNames[batchColumnsObj[i].id] = batchColumnsObj[i].name;
 
-			for(i=0 ; i < batchColumnsObj.length; i++ )
+			var propObj = {'data' : batchColumnsObj[i].id};
+
+			if(importerUi.batchDetails.params.batchAction == 'export-data')
 			{
-				clientFieldsNames.push(batchColumnsObj[i].name);
+				propObj.readOnly = true;
+			}
+			else
+			{
+				propObj.readOnly = batchColumnsObj[i].readOnly;
+			}
 
-				var propObj = {'data' : batchColumnsObj[i].id, 'readOnly' : batchColumnsObj[i].readOnly};
-
-				if (batchColumnsObj[i].type != "text")
+			if (batchColumnsObj[i].type == "autocomplete")
+			{
+				if (batchColumnsObj[i].option.length)
 				{
-					propObj.type = batchColumnsObj[i].type;
-					//~ propObj.source	= batchColumnsObj[i].option != null ? batchColumnsObj[i].option : ajaxCallFunction;
-					propObj.source	= batchColumnsObj[i].option != null ? batchColumnsObj[i].option : importerUi.ajaxCallFunction;
+					propObj.type	= batchColumnsObj[i].type;
+					propObj.source	= batchColumnsObj[i].option;
 					propObj.strict	= false;
+					propObj.filter	= false;
 				}
-
-				clientFieldsProps.push(propObj);
-			}
-			// For v1.1 end
-
-console.log(clientFieldsProps);
-
-			var importBtnName = Joomla.JText._('COM_IMP_IMPORT_BTN_NAME_UPDATE');
-			let handontableParams = {};
-			handontableParams.rowHeaders	= true;
-			//handontableParams.colHeaders	= batchColumnsObj.colName;
-			handontableParams.colHeaders	= clientFieldsNames;
-
-			//handontableParams.columns		= batchColumnsObj.colProperties;
-			handontableParams.columns		= clientFieldsProps;
-			handontableParams.contextMenu	= true;
-			handontableParams.stretchH		= 'none';
-
-			if (importerUi.batchDetails.params.batchAction == 'add-data')
-			{
-				handontableParams.minSpareRows	= 1;
-				importBtnName = Joomla.JText._('COM_IMP_IMPORT_BTN_NAME_IMPORT');
-			}
-
-			/*
-			 * This loop is to remove 'backslash' from string value
-			*/
-			for(i = 0; i < batchRecordsObj.length; i++ )
-			{
-				let thisBatchRecObj = batchRecordsObj[i];
-				batchRecordsObj[i] = jQuery.parseJSON(JSON.stringify(batchRecordsObj[i]));
-			}
-
-			if(batchRecordsObj)
-			{
-				handontableParams.data	= batchRecordsObj;
-			}
-
-			handontableParams.cells = function (row, col, prop){
-				var cellProperties = {};
-
-				if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row]){
-					cellProperties.renderer = importerUi.invalidRowRenderer; // uses function directly
+				else
+				{
+					propObj.editor = 'customselect';
+					propObj.renderer = customSelectRenderer;
+					importerUi.customRendererFields.push(batchColumnsObj[i].id);
 				}
+			}
+			else if(batchColumnsObj[i].type == "repetablecell")
+			{
+				propObj.editor		= 'repHandsontableEditor';
+				propObj.renderer	= repHandsontableRenderer;
+				//propObj.editorFields = batchColumnsObj[i].repeatablefields;
+				importerUi.repFieldDetails[batchColumnsObj[i].id] = batchColumnsObj[i].repeatablefields;
+				importerUi.customRendererFields.push(batchColumnsObj[i].id);
+			}
+			else if (batchColumnsObj[i].type == "image")
+			{
+				propObj.renderer	= imageRenderer;
+				importerUi.customRendererFields.push(batchColumnsObj[i].id);
+			}
 
-				return cellProperties;
-			};
+			clientFieldsProps.push(propObj);
+		}
+		// For v1.1 end
 
-			importerUi.doneProgress("");
+		//console.log(clientFieldsProps);
 
-			// Below two lines to load handsontable
-			let container	= document.getElementById('example');
-			importerUi.hot	= new Handsontable(container, handontableParams);
+		var importBtnName = Joomla.JText._('COM_IMP_IMPORT_BTN_NAME_UPDATE');
+		let handontableParams = {};
+		handontableParams.rowHeaders	= true;
+		handontableParams.colHeaders	= true;
+		handontableParams.columns		= clientFieldsProps;
+		handontableParams.contextMenu	= false;
+		handontableParams.stretchH		= 'none';
+		handontableParams.fixedRowsTop	= 1;
 
-			importerUi.hot.updateSettings({
-					afterChange: function(changes, source) {
-							//console.log(source);
-							importerUi.checkTempItems = [];
-							for(i = 0; i < changes.length; i++){
-								if(changes[i][2] != changes[i][3]){
-									document.getElementById("import-btn").disabled = true;
-								}
+		if (importerUi.batchDetails.params.batchAction == 'add-data')
+		{
+			handontableParams.minSpareRows	= 1;
+			importBtnName = Joomla.JText._('COM_IMP_IMPORT_BTN_NAME_IMPORT');
+		}
+
+		/*
+		 * This loop is to remove 'backslash' from string value
+		*/
+		for(i = 0; i < batchRecordsObj.length; i++ )
+		{
+			let thisBatchRecObj = batchRecordsObj[i];
+			batchRecordsObj[i] = jQuery.parseJSON(JSON.stringify(batchRecordsObj[i]));
+		}
+
+		importerUi.clientFieldNames = newclientFieldsNames;
+		handontableParams.data = [newclientFieldsNames];
+
+		if(batchRecordsObj)
+		{
+			handontableParams.data	= handontableParams.data.concat(batchRecordsObj);
+		}
+
+		handontableParams.cells = function (row, col, prop){
+
+			//console.log(prop);
+			var cellProperties = {};
+
+			if (row === 0) {
+				cellProperties.readOnly = true;
+				cellProperties.renderer = importerUi.firstRowRenderer; // uses function directly
+			}
+			else if (importerUi.batchTempInvalid.length && importerUi.batchTempInvalid[row] && (jQuery.inArray(prop, importerUi.customRendererFields) == '-1')){
+				cellProperties.renderer = importerUi.invalidRowRenderer; // uses function directly
+			}
+
+			return cellProperties;
+		};
+
+		importerUi.doneProgress("");
+
+		//console.log(handontableParams);
+
+		// Below two lines to load handsontable
+		let container	= document.getElementById('example');
+		importerUi.hot	= new Handsontable(container, handontableParams);
+
+		// Code to update status of import-btn
+		importerUi.hot.updateSettings({
+			afterChange: function(changes, source) {
+					//console.log(changes);
+					if (changes){
+						importerUi.checkTempItems = [];
+						for(i = 0; i < changes.length; i++){
+							if(changes[i][2] != changes[i][3]){
+								document.getElementById("import-btn").disabled = true;
+								document.getElementById("validate").disabled = false;
 							}
-						},
-					modifyData : function(row, column, valueHolder,ioMode) {
-							//console.log(row + "--- " + column + "--- " + valueHolder + "--- " + ioMode);
 						}
-				});
+					}
+				},
+			modifyData : function(row, column, valueHolder,ioMode) {
+					//console.log(row + "--- " + column + "--- " + valueHolder + "--- " + ioMode);
+				},
+			beforeRender : function(){
+				},
+			afterRender : function(){
+					importerUi.doneProgress("");
+				}
+		});
 
-			let validateButton = importerUi.createButton('JForm["validate"]', 'validate', 'validate', 'Validate');
-			validateButton.on('click', importerUi.saveTempRecords);
+		//importerUi.hot.view.wt.update('beforeOnCellMouseDown', importerUi.onMyBeforeOnCellMouseDown);
+		//console.log(importerUi.hot.view.wt.update);
 
-			let saveTempButton = importerUi.createButton('JForm["saveTemp"]', 'saveTemp', 'saveTemp', 'Save Progress');
-			saveTempButton.on('click', importerUi.saveTempRecords);
+		let validateButton = importerUi.createButton('JForm["validate"]', 'validate', 'validate', 'Validate');
+		validateButton.on('click', importerUi.saveTempRecords);
 
-			let backButton = importerUi.createButton('JForm["back"]', 'back pull-right', 'back', 'Cancel');
-			backButton.on('click', importerUi.goFirst);
+		let saveTempButton = importerUi.createButton('JForm["saveTemp"]', 'saveTemp', 'saveTemp', 'Save Progress');
+		saveTempButton.on('click', importerUi.saveTempRecords);
 
-			let importButton = importerUi.createButton('JForm["import"]', 'import', 'import-btn', importBtnName);
-			importButton.on('click', importerUi.importTempRecords);
+		let backButton = importerUi.createButton('JForm["back"]', 'back pull-right', 'back', 'Cancel');
+		backButton.on('click', importerUi.goFirst);
 
-			let batchDetViewBtn = importerUi.createButton('JForm["batchView"]', 'batchView', 'batchView', 'View Batch Details');
-			batchDetViewBtn.on('click', importerUi.viewBaatchStatus);
+		let importButton = importerUi.createButton('JForm["import"]', 'import', 'import-btn', importBtnName);
+		importButton.on('click', importerUi.importTempRecords);
 
-			jQuery("#importer-buttons-container").append(batchDetViewBtn);
+		let batchDetViewBtn = importerUi.createButton('JForm["batchView"]', 'batchView', 'batchView', 'View Batch Details');
+		batchDetViewBtn.on('click', importerUi.viewBaatchStatus);
+
+		let exportButton = importerUi.createButton('JForm["btnExport"]', 'btnExport', 'btnExport', 'Export');
+		exportButton.on('click', importerUi.exportData);
+
+		let htmlSwitchButton = importerUi.createSwitch('JForm["switchHtml"]', 'switchHtml', 'switchHtml', 'Remove Html');
+		jQuery("input[type='checkbox']", htmlSwitchButton).on('change', importerUi.toggleData);
+
+		jQuery("#importer-buttons-container").append(batchDetViewBtn);
+
+		if(importerUi.batchDetails.params.batchAction == 'export-data')
+		{
+			jQuery("#importer-buttons-container").append(exportButton);
+			jQuery("#importer-buttons-container").append(htmlSwitchButton);
+		}
+		else
+		{
 			jQuery("#importer-buttons-container").append(saveTempButton);
 			jQuery("#importer-buttons-container").append(validateButton);
 			jQuery("#importer-buttons-container").append(importButton);
-			jQuery("#importer-buttons-container").append(backButton);
+		}
 
-			let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
-			let filteredValidated	= importerUi.validateTempItems.filter(importerUi.checkEmptyArray);
+		jQuery("#importer-buttons-container").append(backButton);
 
-			if(importerUi.batchTempInvalid.length && (filteredInvalid.length == 0) && (filteredValidated.length == 0)){
-				document.getElementById("import-btn").disabled = false;
-			}else{
-				document.getElementById("import-btn").disabled = true;
-			}
+		let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
+		let filteredValidated	= importerUi.validateTempItems.filter(importerUi.checkEmptyArray);
 
-			delete importerUi.batchTempRecords;
-			delete importerUi.batchClientRecords;
-		},
+		//~ if((importerUi.batchTempInvalid.length == 1) && (filteredInvalid.length == 0) && (filteredValidated.length == 0)){
+			//~ document.getElementById("import-btn").disabled = false;
+			//~ document.getElementById("validate").disabled = true;
+		//~ }else{
+			//~ document.getElementById("import-btn").disabled = true;
+			//~ document.getElementById("validate").disabled = false;
+		//~ }
+
+		if(filteredInvalid.length || filteredValidated.length || importerUi.fetchall || importerUi.batchDetails.start_id || !batchRecordsObj.length)
+		{
+			document.getElementById("import-btn").disabled = true;
+			document.getElementById("validate").disabled = false;
+		}
+		else
+		{
+			document.getElementById("import-btn").disabled = false;
+			document.getElementById("validate").disabled = true;
+		}
+
+		delete importerUi.batchTempRecords;
+		delete importerUi.batchClientRecords;
+	},
+
+	exportData : function()
+	{
+		//console.log("inside function");
+		  var exportPlugin = importerUi.hot.getPlugin('exportFile');
+		  exportPlugin.downloadFile('csv', {filename: importerUi.batchDetails.batch_name});
+	},
 
 	viewBaatchStatus : function ()
 	{
-		let tableRecordsCount	= importerUi.hot.countRows() - importerUi.hot.countEmptyRows() ;
+		importerUi.showProgress('Fetching batch details.. Please wait..');
+		let tableRecordsCount	= importerUi.hot.countRows() - importerUi.hot.countEmptyRows() - 1;
 
 		let promise = importerService.getTempStatus(importerUi.batchDetails.id);
 			promise.fail(
@@ -633,6 +1014,7 @@ console.log(clientFieldsProps);
 				}
 			).done(
 				function() {
+					importerUi.doneProgress();
 					let temDetails	= jQuery.parseJSON(promise.responseText);
 					jQuery('#batchStatus').modal('show');
 					jQuery('#batchStatusTitle').text(importerUi.batchDetails.batch_name);
@@ -642,6 +1024,24 @@ console.log(clientFieldsProps);
 					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_VLD_REC') + "<b>" + temDetails.validatedTotal + "</b></li>");
 					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_INVLD_REC') + "<b>" + temDetails.invalidTotal + "</b></li>");
 					jQuery('#batchStatusBody ul').append("<li class='list-group-item'>" + Joomla.JText._('COM_IMP_TOT_IMP_REC') + "<b>" + temDetails.importedTotal + "</b></li>");
+
+					var divDefaultShowCover = jQuery("<div></div>");
+					if(importerUi.batchDetails.params.hasOwnProperty('defaultVals'))
+					{
+						divDefaultShowCover.attr("class", "defaultDivCover");
+						defValParsed	= JSON.parse(importerUi.batchDetails.params.defaultVals);
+
+						divDefaultShowCover.append(jQuery("<span></span>"));
+
+						for (var key in defValParsed)
+						{
+							let divDefaultShow = jQuery("<div></div>").text(key + " = " + defValParsed[key]);
+							divDefaultShowCover.append(divDefaultShow);
+						}
+
+						jQuery('#batchStatusBody').append(divDefaultShowCover);
+					}
+					
 				}
 			);
 	},
@@ -695,8 +1095,9 @@ console.log(clientFieldsProps);
 
 	showProgress : function(text, percentage){
 			let showPercent = (percentage > 100) ? 100 : Math.round((percentage * 100) / 100);
+			let textToShow = showPercent ? text + " " + showPercent + "% done" : text;
 
-			jQuery("#progress-text #progress-text-span").text(text + " " + showPercent + "% done");
+			jQuery("#progress-text #progress-text-span").text(textToShow);
 			jQuery("#pg-bar").css('width', showPercent + "%");
 
 			if(!(jQuery(".fade-div").hasClass("fadded")))
@@ -715,14 +1116,21 @@ console.log(clientFieldsProps);
 			importerUi.processStartTime = '';
 			jQuery("#pg-bar").css('width', "0");
 			jQuery(".fade-div").removeClass("fadded");
-			jQuery("#progress-text").toggleClass("text-hide text-show");
+			jQuery("#progress-text").removeClass("text-show").addClass("text-hide");
+			jQuery("#progress-text #progress-time-span").text("");
 		},
 
 	importTempRecords : function (event, itemStart=0, dumbParam1 = 0, dumbParam2 = 0){
 			var processingStatusText	= Joomla.JText._('COM_IMP_REC_UPDATING');
 			var successStatusText		= Joomla.JText._('COM_IMP_REC_UPDATED');
 			let allItems				= importerUi.hot.getSourceData();
-			let recordsCount			= (importerUi.hot.getSourceData()).length;
+
+			if (itemStart == 0)
+			{
+				importerUi.shiftedRow = [allItems.shift()];
+			}
+
+			let recordsCount			= (allItems).length;
 			let itemsEnd				= importerUi.postItemSize + itemStart;
 			let pgWidth					= ((itemStart) / recordsCount)*(100);
 
@@ -746,6 +1154,8 @@ console.log(clientFieldsProps);
 				let filteredInvalid		= importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
 
 				if(filteredInvalid.length){
+					importerUi.hot.loadData(importerUi.shiftedRow.concat(importerUi.hot.getSourceData()));
+					importerUi.hot.render();
 					swal("Attention!", "Few records had issue while saving. Please validate again and import the batch", "warning");
 				}else{
 					swal(successStatusText, '', "success");
@@ -787,7 +1197,7 @@ console.log(clientFieldsProps);
 					}
 
 					if(itemStart == 0){
-						importerUi.batchTempInvalid = [];
+						importerUi.batchTempInvalid = [''];
 					}
 
 					importerUi.batchTempInvalid = importerUi.batchTempInvalid.concat(chekcingArray);
@@ -795,6 +1205,9 @@ console.log(clientFieldsProps);
 					// Assigning temp table id's to handsontable data
 					for (i = 0; i < importedRecDetails.length; i++){
 						if (importedRecDetails[i][importerUi.primaryKey] !== null){
+							//importerUi.hot.getSourceData()[itemStart + i][importerUi.primaryKey] = importedRecDetails[i][importerUi.primaryKey];
+							//~ var newAllItems = importerUi.hot.getSourceData();
+							//~ newAllItems.shift();
 							importerUi.hot.getSourceData()[itemStart + i][importerUi.primaryKey] = importedRecDetails[i][importerUi.primaryKey];
 						}
 					}
@@ -802,6 +1215,27 @@ console.log(clientFieldsProps);
 					importerUi.updateTempRecordsAfterImport(event, itemStart, importedRecDetails, importedInvalidDetails);
 				}
 			);
+		},
+
+	toggleData : function(event,state){
+
+			event.preventDefault();
+			var toggleDataArr	= [];
+			toggleDataArr		= [importerUi.clientFieldNames];
+
+			importerUi.showProgress(Joomla.JText._('HTML Toggle'), 50);
+
+			if(jQuery(this).is(":checked"))
+			{
+				toggleDataArr = toggleDataArr.concat(importerUi.batchClientRecordsStripped);
+			}
+			else
+			{
+				toggleDataArr = toggleDataArr.concat(importerUi.batchClientRecords);
+			}
+			
+			importerUi.hot.loadData(toggleDataArr);
+			importerUi.hot.render();
 		},
 
 	updateTempRecordsAfterImport : function(event, itemStart, importedRecDetails, importedInvalidDetails){
@@ -836,7 +1270,17 @@ console.log(clientFieldsProps);
 
 	saveTempRecords : function(event, itemStart=0, dumbParam1 = 0, dumbParam2 = 0){
 			let allItems		= importerUi.hot.getSourceData();
-			let recordsCount	= (importerUi.hot.getSourceData()).length;
+			
+			if(itemStart == 0)
+			{
+				importerUi.shiftedRow = [allItems.shift()];
+			}
+			
+			//console.log("chekcing element count  == " + allItems.length);
+
+
+
+			let recordsCount	= allItems.length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let pgWidth			= ((itemStart) / recordsCount)*(100);
 			var pgText			= Joomla.JText._('COM_IMP_REC_SAVING_TEMP');
@@ -869,7 +1313,15 @@ console.log(clientFieldsProps);
 					// Assigning temp table id's to handsontable data
 					for (i = 0; i < tempIds.length; i++){
 						if(tempIds[i] !== null){
-							importerUi.hot.getSourceData()[itemStart + i].tempId = tempIds[i];
+
+							var itemIndex = parseInt(itemStart) + parseInt(i);
+
+							//console.log(itemIndex + " tempid " + tempIds[i] + " itemidid " + importerUi.hot.getSourceData()[itemIndex].zooid);
+							
+							if (importerUi.hot.getSourceData()[itemIndex])
+							{
+								importerUi.hot.getSourceData()[itemIndex].tempId = tempIds[i];
+							}
 						}
 					}
 
@@ -902,7 +1354,10 @@ console.log(clientFieldsProps);
 
 	validateTempRecords : function(event, itemStart, dumbParam1 = 0, dumbParam2 = 0){
 			let allItems		= importerUi.hot.getSourceData();
-			let recordsCount	= (importerUi.hot.getSourceData()).length;
+			
+			//console.log("chekicng for validate item lenthg " + allItems.length);
+			
+			let recordsCount	= allItems.length;
 			let itemsEnd		= importerUi.postItemSize + itemStart;
 			let checkItems		= allItems.slice(itemStart, itemsEnd);
 			let completedItem	= importerUi.postItemSize / 3;
@@ -933,7 +1388,7 @@ console.log(clientFieldsProps);
 					}
 
 					if(itemStart == 0){
-						importerUi.batchTempInvalid = [];
+						importerUi.batchTempInvalid = [''];
 					}
 
 					importerUi.batchTempInvalid = importerUi.batchTempInvalid.concat(chekcingArray);
@@ -984,16 +1439,20 @@ console.log(clientFieldsProps);
 				}
 			).done(
 				function() {
+					importerUi.hot.loadData(importerUi.shiftedRow.concat(importerUi.hot.getSourceData()));
+					//importerUi.copyHeader = 1;
 					importerUi.hot.render();
 
-						//location.reload();
-						let filteredInvalid = importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
+					//location.reload();
+					let filteredInvalid = importerUi.batchTempInvalid.filter(importerUi.checkEmptyArray);
 
-						if(importerUi.batchTempInvalid.length && filteredInvalid.length == 0 && event == 'validate'){
-							document.getElementById("import-btn").disabled = false;
-						}else{
-							document.getElementById("import-btn").disabled = true;
-						}
+					if(importerUi.batchTempInvalid.length && filteredInvalid.length == 0 && event == 'validate'){
+						document.getElementById("import-btn").disabled = false;
+						document.getElementById("validate").disabled = true;
+					}else{
+						document.getElementById("import-btn").disabled = true;
+						document.getElementById("validate").disabled = false;
+					}
 				}
 			);
 		},
@@ -1027,28 +1486,91 @@ console.log(clientFieldsProps);
 				$comboLabel = jQuery("<label></label>").attr("for", name).attr("class", "span2").text(label);
 			}
 
-			$comboEle = jQuery("<select></select>").attr("id", id).attr('name', name).attr("class", "span5");
+			$comboEle = jQuery("<select></select>").attr("id", id).attr('name', name).attr("class", "span5 select-box-for-chosen");
 			if(multiplee){
 				$comboEle.attr("multiple", "multiple");
 			}
-			
+
 			if(defaultOption)
 			{
-				$comboEle.append("<option value=''>Select</option>");
+				$comboEle.append("<option value=''></option>");
 			}
 
 			jQuery.each(optionList, function (i, el) {
 				if(typeof(el) == 'object'){
 					el = el.name;
 				}
-				$comboEle.append("<option value='" + i + "'>" + el + "</option>");
+				$comboEle.append("<option value=" + i + ">" + el + "</option>");
 			});
 
+			//jQuery($comboEle).chosen();
+		
 			$comboLabel.appendTo($combo);
 			$comboEle.appendTo($combo);
 
 			return $combo;
 		},
+
+	createRadioButtons : function (options = '', label, name, classs, id)
+	{
+		let $comboLabel = '';
+		let $comboEle = '';
+		let $combo = '';
+		
+		options = [{name:"identifiers", value:"1", text:"Provide Aliases"}, {name:"identifiers", value:"2", text:"Fetch All"}]; 
+
+		$combo = jQuery("<div></div>").attr("class", classs).attr("id", id+"Div");
+
+		if(label){
+				$comboLabel = jQuery("<label></label>").attr("for", name).attr("class", "span2").text(label);
+			}
+
+		$comboLabel.appendTo($combo);
+
+		for (i = 0; i < options.length; i++)
+		{
+			$comboEle = importerUi.createRadios(options[i].name, options[i].value, options[i].text);
+			$comboEle.appendTo($combo);
+		}
+
+		return $combo;
+	},
+
+	createRadios : function (name, value, text)
+	{
+		let readySpan	= '';
+		let readyDiv	= '';
+		let readyRadio	= '';
+		
+		readyDiv	= jQuery("<span></span>");
+		readySpan	= jQuery("<label></label>").text(text).attr('for', name + '-' + value).attr('class', 'radio-label');
+		readyRadio = jQuery("<input></input>").attr("type", "radio").attr("name", name).attr("value", value).attr('id', name + '-' + value);
+		
+		readyRadio.appendTo(readyDiv);
+		readySpan.appendTo(readyDiv);
+		return readyDiv;
+	},
+
+	createSwitch : function (classs, name, value, text)
+	{
+		var mainCoverDiv	= '';
+		var messDiv		= '';
+		var readyLabel		= '';
+		var readyCheckBox	= '';
+
+		mainCoverDiv	= jQuery("<div></dvi>").attr('class', 'switch-main-cover');
+		messDiv			= jQuery("<div></dvi>").attr('class', 'switch-cover').text(text);
+		readyLabel		= jQuery("<label></label>").attr('class', 'switch');
+		readyCheckBox	= jQuery("<input></input>").attr("type", "checkbox").attr("name", name).attr('id', name );
+		var sliderDiv	= jQuery("<div></div>").attr("class", "slider round");
+
+		readyCheckBox.appendTo(readyLabel);
+		sliderDiv.appendTo(readyLabel);
+		messDiv.appendTo(mainCoverDiv);
+		readyLabel.appendTo(mainCoverDiv);
+		
+		return mainCoverDiv;
+	},
 
 	createButton : function (name, classs, id, textDisplay){
 			let combo = jQuery("<button></button>").attr("id", id).attr("class", classs).attr('name', name).text(textDisplay);
@@ -1082,12 +1604,27 @@ jQuery(document).ready(function(){
 
 		let batchId = jQuery("#batchId").val();
 		if(batchId){
-			importerUi.showProgress(Joomla.JText._('COM_IMP_FETCHING_CLT_RECORDS'), 1);
-			
+			importerUi.showProgress('Preparing CSV', 1);
+
 			importerUi.postItemSize = importerUi.fetchItemSize = parseInt(jQuery("#pfSize").val());
-			
+
 			importerUi.batchId = batchId;
 			importerUi.getBatch();
 		}
-
+		
+		//~ jQuery(".toggleHtml").change(function(){
+				//~ importerUi.toggleData(jQuery(this).is(":checked"));
+			//~ })
 	});
+
+Array.prototype.unique = function() {
+    var a = this.concat();
+    for(var i=0; i<a.length; ++i) {
+        for(var j=i+1; j<a.length; ++j) {
+            if(a[i] === a[j])
+                a.splice(j--, 1);
+        }
+    }
+
+    return a;
+};
