@@ -50,12 +50,11 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 		$batch			= $jinput->get('batchDetails', '', 'STRING');
 		$this->helper	= new ZooApiHelper;
 
-		$this->user				= JFactory::getUser();
-		$this->records			= json_decode($records);
-		$this->batch			= json_decode($batch);
-		$this->defaultValues	= (array)json_decode($this->batch->params->defaultVals);
-		$newIds					= array();
-		$invalid				= array();
+		$this->user		= JFactory::getUser();
+		$this->records	= json_decode($records);
+		$this->batch	= json_decode($batch);
+		$newIds			= array();
+		$invalid			= array();
 
 		$type			= $this->batch->params->type;
 		$filePath		= JPATH_SITE . '/media/zoo/applications/blog/types/' . $type . '.config';
@@ -71,12 +70,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 
 		foreach ($this->records as $record)
 		{
-			$testRecord		= (array) $record;
-
-			unset($testRecord['tempId']);
-
-			// Condition to remove empty records from temp table
-			if (empty(array_filter($testRecord)))
+			if (empty(array_filter((array) $record)))
 			{
 				continue;
 			}
@@ -163,14 +157,6 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 		}
 		*/
 
-		if(!empty($this->defaultValues))
-		{
-			foreach ($this->defaultValues as $defKey=>$defVal)
-			{
-				$recordDetails->$defKey = $defVal;
-			}
-		}
-
 		$item->name		= $recordDetails->name;
 		$item->alias	= $recordDetails->alias;
 		$item->state	= (trim($recordDetails->state) ? 1 : 0);
@@ -191,54 +177,7 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 
 			switch ($type)
 			{
-				case 'biography':
-					$tempArray = json_decode($stripSlashValue);
-					$tempArray2 = array();
-					$finArray = array();
-					$i	= 0;
-
-					foreach ($tempArray as $tempAr)
-					{
-						$heading = $tempAr->heading;
-						unset($tempAr->heading);
-						$tempArray2[$heading][] = (array) $tempAr;
-					}
-
-					foreach ($tempArray2 as $tempKey => $tempVal)
-					{
-						$finArray[$i]['heading'] = $tempKey;
-						$finArray[$i]['items'] = $tempVal;
-
-						$i++;
-					}
-
-					$element->bindData($finArray);
-				break;
-
-				case 'checkbox':
-					if (trim($stripSlashValue))
-					{
-						$impData = array();
-						$proarr = array();
-						$impData = array_map('trim', explode('|', $stripSlashValue));
-
-						foreach ($impData as $impKey => $impVal)
-						{
-							$opt['option'][$impKey] = $impVal;
-						}
-
-						$opt['count']	= '1';
-					}
-
-					$element->bindData($opt);
-				break;
 				case 'text':
-				case 'link':
-					$arr = array();
-					$arr[0]['value'] = $stripSlashValue;
-					$element->bindData($arr);
-				break;
-				case 'textdate':
 					$arr = array();
 					$arr[0]['value'] = $stripSlashValue;
 					$element->bindData($arr);
@@ -316,17 +255,8 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 					$element->bindData($arr);
 					break;
 				case 'relateditemspro':
-					$riProEleData[$id] = $stripSlashValue;
-					$arr = array();
-
-					if (trim($stripSlashValue))
-					{
-						$idsArray = $this->helper->getByAliases(explode('|', $stripSlashValue), '', true);
-						$arr['item'] = $idsArray;
-					}
-
-					$element->bindData($arr);
-
+					$riProEleData[$id] = $recordDetails->$id;
+					$element->bindData();
 					break;
 			}
 		}
@@ -341,7 +271,6 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 
 			$riProEleDataFiltered = array_filter($riProEleData);
 
-			/*
 			if (!empty($riProEleDataFiltered))
 			{
 				foreach ($riProEleDataFiltered as $fieldK => $fieldV)
@@ -384,7 +313,6 @@ class Importer_ZooApiResourceClientimport extends ApiResource
 					}
 				}
 			}
-			*/
 
 			return array('id' => $item->id, 'invalid' => null);
 		}

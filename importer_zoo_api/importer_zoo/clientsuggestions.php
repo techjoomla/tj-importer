@@ -33,8 +33,24 @@ class Importer_ZooApiResourceClientsuggestions extends ApiResource
 		$this->helper	= new ZooApiHelper;
 		$jinput			= JFactory::getApplication()->input;
 		$aliases		= $jinput->get('query', '', 'RAW');
+		$batchType		= $jinput->get('batchType', '', 'STRING');
+		$fieldId		= $jinput->get('fieldId', '', 'STRING');
+		$lookTypes		= array();
 
-		$suggestions	= $this->helper->getSuggestions($aliases);
+		$filePath		= JPATH_SITE . '/media/zoo/applications/blog/types/' . $batchType . '.config';
+
+		if (JFile::exists($filePath))
+		{
+			$decodeFile		= (array) json_decode(JFile::read($filePath));
+			$decodeElements = (array) $decodeFile['elements'];
+
+			if (array_key_exists($fieldId, $decodeElements))
+			{
+				$lookTypes = (array) $decodeElements[$fieldId]->application->_chosentypes;
+			}
+		}
+
+		$suggestions	= $this->helper->getSuggestions($aliases, $lookTypes);
 
 		$this->plugin->setResponse($suggestions);
 	}

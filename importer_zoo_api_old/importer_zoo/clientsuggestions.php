@@ -19,7 +19,7 @@ require_once JPATH_SITE . '/plugins/api/importer_zoo/helper.php';
  *
  * @since  2.5
  */
-class Importer_ZooApiResourceClientvalidate extends ApiResource
+class Importer_ZooApiResourceClientsuggestions extends ApiResource
 {
 	/**
 	 * GET function to fetch columns in zoo
@@ -30,8 +30,13 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	 **/
 	public function get()
 	{
-		// $this->plugin->setResponse("POST method is not supporter, try GET method");
-		die("in get funtion");
+		$this->helper	= new ZooApiHelper;
+		$jinput			= JFactory::getApplication()->input;
+		$aliases		= $jinput->get('query', '', 'RAW');
+
+		$suggestions	= $this->helper->getSuggestions($aliases);
+
+		$this->plugin->setResponse($suggestions);
 	}
 
 	/**
@@ -50,11 +55,6 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 
 		$checkRecords 	= (array) json_decode($jinput->get('records', '', 'RAW'));
 		$batch 			= json_decode($jinput->get('batchDetails', '', 'STRING'));
-
-		$batchParams			= $batch->params;
-		$this->batchFields		= $batchParams->columns;
-		$this->defaultValues	= (array)json_decode($batchParams->defaultVals);
-
 		$type			= $batch->params->type;
 		$filePath		= JPATH_SITE . '/media/zoo/applications/blog/types/' . $type . '.config';
 
@@ -72,7 +72,7 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 
 			foreach ($decodeElements as $k => $v)
 			{
-				if ($v->type == 'radio' || $v->type == 'select' || $v->type == 'checkbox')
+				if ($v->type == 'radio' || $v->type == 'select')
 				{
 					$optionsArray = (array) $v->option;
 
@@ -123,11 +123,9 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 	 **/
 	public function validate($record, $decodeElements, $validOptionsFields)
 	{
-		$invalidFields	= null;
-		$testRecord		= $record;
-		unset($testRecord['tempId']);
+		$invalidFields = null;
 
-		if (!empty(array_filter($testRecord)))
+		if (!empty(array_filter($record)))
 		{
 			foreach ($record as $recordKey => $recordData)
 			{
@@ -135,16 +133,6 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 
 				if (array_key_exists($recordKey, $decodeElements))
 				{
-					if (!empty(array_filter($this->batchFields)) && !in_array($recordKey, $this->batchFields))
-					{
-						continue;
-					}
-
-					if (!empty(($this->defaultValues)) && array_key_exists($recordKey, $this->defaultValues))
-					{
-						continue;
-					}
-
 					switch ($decodeElements[$recordKey]->type)
 					{
 						case 'alias' :
@@ -167,8 +155,6 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 							break;
 						case 'relateditemspro' :
 
-								$assoTypes = (array) $decodeElements[$recordKey]->application->_chosentypes;
-
 								if (preg_match('/[^a-z0-9|\-]/', trim($recordData))) // '/[^a-z\d]/i' should also work.
 								{
 									$invalidFields[] = $recordKey;
@@ -179,7 +165,7 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 									$passData	= array_filter($explodeByPipe);
 
 									// $aliasRecords	= $this->zapp->table->item->getByAliases($passData);
-									$aliasRecords	= $this->helper->getByAliases($passData, $assoTypes);
+									$aliasRecords	= $this->helper->getByAliases($passData);
 
 									if (count($passData) != count($aliasRecords))
 									{
@@ -200,41 +186,6 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 									}
 								}
 							break;
-						case 'textdate' :
-								if (trim($recordData))
-								{
-									if ($this->validateTextDate($recordData))
-									{
-										$invalidFields[] = $recordKey;
-									}
-								}
-							break;
-						case 'biography' :
-								if (trim($recordData))
-								{
-									$recordDataArr	= json_decode($recordData);
-									$invalidBioKeys	= array();
-
-									foreach ($recordDataArr as $bioKy => $bioData)
-									{
-										if (trim($bioData->stdStart) && $this->validateTextDate($bioData->stdStart))
-										{
-											$invalidBioKeys[$bioKy][] = 'stdStart';
-										}
-
-										if (trim($bioData->stdEnd) && $this->validateTextDate($bioData->stdEnd))
-										{
-											$invalidBioKeys[$bioKy][] = 'stdEnd';
-										}
-									}
-
-									if (!empty($invalidBioKeys))
-									{
-										$invalidFields[] = array($recordKey => $invalidBioKeys);
-									}
-								}
-							break;
-
 						case 'radio' :
 								$validOptions	= $validOptionsFields[$recordKey]['options'];
 
@@ -245,7 +196,6 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 
 							break;
 						case 'select' :
-						case 'checkbox' :
 								$validOptions	= $validOptionsFields[$recordKey]['options'];
 
 								if ($decodeElements[$recordKey]->multiple)
@@ -277,118 +227,12 @@ class Importer_ZooApiResourceClientvalidate extends ApiResource
 				$invalidFields[] = 'name';
 			}
 
-			if ((!isset($record['category']) || trim($record['category']) == '') && !array_key_exists('category', $this->defaultValues))
+			if (!isset($record['category']) || trim($record['category']) == '')
 			{
-				if (empty(array_filter($this->batchFields)) || (!empty(array_filter($this->batchFields)) && in_array('category', $this->batchFields)))
-				{
-					$invalidFields[] = 'category';
-				}
+				$invalidFields[] = 'category';
 			}
 		}
 
 		return $invalidFields;
-	}
-
-	/**
-	 * validateTextDate function
-	 *
-	 * @param   String  $recordData  Date string
-	 * 
-	 * @return  STRING  error message
-	 * 
-	 * @since  3.0
-	 **/
-	private function validateTextDate($recordData)
-	{
-		$invalidField = false;
-
-		try
-		{
-			// Trim Spaces
-			$recordDataTrim		= trim($recordData);
-
-			$bcDate				= ($recordDataTrim[0] == '-');
-
-			// Remove minus sign
-			$recordDataFinal	= (($recordDataTrim[0] != '-') ? $recordDataTrim : ltrim($recordDataTrim, "-"));
-
-			// Separate out date and time string in an array
-			$dateTime		= explode(" ", $recordDataFinal);
-			$date			= trim($dateTime[0]);
-			$time			= trim($dateTime[1]);
-
-			if (preg_match('/[^0-9\-]/', $date) || count($dateTime) > 2 || preg_match('/[^0-9\:]/', $time))
-			{
-				$invalidField = true;
-			}
-
-			// Separate out date and time parameters in an array
-			$dateArray		= array();
-			$dateArray		= explode("-", $date);
-			$timeArray		= array();
-			$timeArray		= explode(":", $time);
-
-			if (($bcDate && !empty(array_filter($timeArray))) || ($bcDate && (count($dateArray) > 1)))
-			{
-				$invalidField = true;
-			}
-
-			// Check if minutes are empty. If yes, append 00 to string
-			if (!empty(array_filter($timeArray)) && trim($timeArray[1]) == '')
-			{
-				$recordData		= trim($recordData) . ":00";
-				$timeArray[1] = '00';
-			}
-
-			JHtml::date($recordData, 'Y-m-d H:i:s', 'UTC');
-
-			// Check time params
-			if (((int) $timeArray[0] > 23) || ((int) $timeArray[1] > 59) || ((int) $timeArray[2] > 59))
-			{
-				$invalidField = true;
-			}
-			elseif ((strlen($dateArray[0]) < 4) || ((count(array_filter($dateArray)) < 3) && !empty(array_filter($timeArray))))
-			{
-				$invalidField = true;
-			}
-			elseif (($dateArray[0] == '0000') || ((int) $dateArray[1] < 1 && isset($dateArray[1])))
-			{
-				// Check year and month
-				$invalidField = true;
-			}
-			elseif (isset($dateArray[1]) && isset($dateArray[2]))
-			{
-				// Chekcing days
-				$dayThirty = array(4, 6, 9, 11);
-
-				if ((int) $dateArray[2] < 1)
-				{
-					$invalidField = true;
-				}
-				elseif (in_array((int) $dateArray[1], $dayThirty) && ((int) $dateArray[2] > 30))
-				{
-					$invalidField = true;
-				}
-				elseif ((int) $dateArray[1] == 2)
-				{
-					$year	= (int) $dateArray[0];
-
-					if ((int) $dateArray[2] > 29)
-					{
-						$invalidField = true;
-					}
-					elseif (!((0 == $year % 4) && (0 != $year % 100) || (0 == $year % 400)) && ((int) $dateArray[2] > 28))
-					{
-						$invalidField = true;
-					}
-				}
-			}
-		}
-		catch (Exception $e)
-		{
-			$invalidField = true;
-		}
-
-		return $invalidField;
 	}
 }

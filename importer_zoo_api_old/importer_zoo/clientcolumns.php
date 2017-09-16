@@ -10,8 +10,6 @@
 defined('_JEXEC') or die;
 jimport('joomla.plugin.plugin');
 
-require_once JPATH_SITE . '/plugins/api/importer_zoo/helper.php';
-
 /**
  * Clientcolumns Resource for Importer_zoo Plugin.
  *
@@ -31,31 +29,27 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 		$columns_array	= $decodeFile = array();
 		$jinput			= JFactory::getApplication()->input;
 
-		$type 			= $jinput->get('type', '', 'STRING');
-		$fields 		= $jinput->get('fields', array(), 'ARRAY');
-		$defValFields 	= $jinput->get('defValFields', array(), 'ARRAY');
-		$fields			= array_filter($fields);
-		$this->helper	= new ZooApiHelper;
+		$type 		= $jinput->get('type', '', 'STRING');
+		$fields 	= $jinput->get('fields', array(), 'ARRAY');
+		$fields		= array_filter($fields);
 
-		$types			= explode("_", $type);
+		$types	= explode("_", $type);
 
-		$filePath		= JPATH_SITE . '/media/zoo/applications/blog/types/' . $types[0] . '.config';
+		$filePath	= JPATH_SITE . '/media/zoo/applications/blog/types/' . $types[0] . '.config';
 
 		if (JFile::exists($filePath))
 		{
 			$decodeFile		= (array) json_decode(JFile::read($filePath));
 			$decodeElements = (array) $decodeFile['elements'];
 
-			/*
 			if (!empty($fields))
 			{
 				$filppedFields 	= array_flip($fields);
 				$decodeElements = array_intersect_key($decodeElements, $filppedFields);
 			}
-			*/
 
 			// Core fields of zoo
-			$colBasicEle_array['zooid']		= 'Zoo-id';
+			$colBasicEle_array['zooid']	= 'Zoo-id';
 			$colBasicEle_array['name']		= 'Zoo Name';
 			$colBasicEle_array['alias']		= 'Alias';
 			$colBasicEle_array['state']		= 'State';
@@ -73,12 +67,6 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			{
 				$filppedFields 	= array_flip($fields);
 				$columns_array = array_intersect_key($columns_array, $filppedFields);
-			}
-
-			if (!empty($defValFields))
-			{
-				$flippedDefFields	= array_flip($defValFields);
-				$columns_array		= array_diff_key($columns_array, $flippedDefFields);
 			}
 
 			$escapeColumns 	= array(
@@ -126,10 +114,11 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 			foreach ($columns_array as $colK => $colV)
 			{
 				$tempKetDetails		= $decodeElements[$colK];
-				$optionVal = array();
 
 				if ($optionArray = (array) $tempKetDetails->option)
 				{
+					$optionVal = array();
+
 					foreach ($optionArray as $options)
 					{
 						$optionVal[] = $options->value;
@@ -137,57 +126,23 @@ class Importer_ZooApiResourceClientcolumns extends ApiResource
 				}
 
 				$format				= new stdClass;
-				$format->id			= $colK;								// Unique identifier for field
-				$format->name		= $colV;								// Name for the field
-				// $format->type		= "text";
-				$format->readOnly	= in_array($colK, $colReadOnly_keys);	// Set the field readonly
-				$format->primary	= ($colK == 'zooid' ? 1 : 0);			// set the field as primary key
-				$format->defaultCol	= in_array($colK, $defaultColumns);		// Set the fields as default col so that while editing, these columns are always displayed
-				$format->option		= $optionVal;							// predifined options from select / radio fields
-
-				if ($colK === 'category')
-				{
-					$format->defaultVal = $this->helper->getCategoryIdByType($type);
-				}
-				elseif($colK === 'state')
-				{
-					$format->defaultVal = '';
-				}
-
-				// Switch case to set type of cell - (autocomplete / repetablecell / image / text)
-				switch ($tempKetDetails->type) {
-					case "relateditemspro":
-					case "radio" :
-					case "checkbox":
-							$format->type = 'autocomplete';
-						break;
-					case "textarea" :
-							$format->type = 'textarea';
-						break;
-					case "biography":
-							$format->type = 'repetablecell';
-							$format->repeatablefields = array(
-															array('id' => 'heading', 'name' => "Section Heading"),
-															array('id' => "stdStart", 'name' => "Std Start Date"),
-															array('id' => "disStart", 'name' => "Display Start Date"),
-															array('id' => "stdEnd", 'name' => "Std End Date"),
-															array('id' => "disEnd", 'name' => "Display End Date"),
-															array('id' => "priDescription", 'name' => "Primary Desc"),
-															array('id' => "secDescription", 'name' => "Secondary Desc")
-														);
-						break;
-					case "imagepro":
-							$format->type			= 'image';
-							$format->baseurl		= $this->helper->getImageInitialPath();//"http://stageassets.osianama.com/";
-							$format->regex			= '\/(?=[^\/]*$)';
-							$format->replacedStr	= "/.resized_img_s3/small/";
-						break;
-					default:
-						$format->type = 'text';
-				}
+				$format->id			= $colK;
+				$format->name		= $colV;
+				$format->type		= ($tempKetDetails->type == "relateditemspro" || $tempKetDetails->type == "radio") ? "autocomplete" : "text";
+				$format->readOnly	= in_array($colK, $colReadOnly_keys);
+				$format->primary	= ($colK == 'zooid' ? 1 : 0);
+				$format->defaultCol	= in_array($colK, $defaultColumns);
+				$format->option		= $optionVal;
 
 				$myfinalArrayy[]	= $format;
 			}
+
+			/*
+			$finalReturn['colProperties']	= $colProperties_array;
+			$finalReturn['colFields']		= $columns_array;
+			$finalReturn['colIds']			= $columnsId_array;
+			$finalReturn['colName']			= $columnsName_array;
+			*/
 		}
 		else
 		{

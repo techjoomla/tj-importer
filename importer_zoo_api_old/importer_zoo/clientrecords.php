@@ -43,20 +43,14 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 	{
 		$jinput			= JFactory::getApplication()->input;
 
-		$thisparams		= json_decode($jinput->get('batchparams', '', 'STRING'));
-		$this->type		= $thisparams->type;
+		$this->type		= $jinput->get('type', '', 'STRING');
 		$fields			= $jinput->get('fields', '', 'ARRAY');
 		$ids			= $jinput->get('ids', '', 'STRING');
-		$fetchall		= (property_exists($thisparams, 'fetchall') && $thisparams->fetchall != '') ? $thisparams->fetchall : false;
-		$startPoint		= $jinput->get('startPoint', 0, 'INT');
-		$countall		= $jinput->get('countall', 0, 'INT');
-		$limit			= $jinput->get('limit', 0, 'INT');
-
-		$this->ids		= trim($ids) ? array_filter(explode(",", $ids)) : '';
+		$this->ids		= array_filter(explode(",", $ids));
 		$this->helper	= new ZooApiHelper;
 
-		$this->fields		= array();
-		$this->primaryKey	= '';
+		$this->fields	= array();
+		$this->primaryKey = '';
 
 		foreach ($fields as $field)
 		{
@@ -86,39 +80,7 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 
 		// Get instance of blog apps
 		// $records = $this->zapp->table->item->getByIds($this->ids);
-		if ($fetchall)
-		{
-			$state			= $fetchall->State ? ($fetchall->State == 2 ? 0 : 1) : null;
-			$catFilter		= array();
-			$catFilter[]	= $fetchall->Category;
-
-			// Get all categories
-			$allCategories	= $this->zapp->table->category->getAll(1);
-
-			// Loop through all categories to check if the selected category has any child categories
-			foreach ($allCategories as $catKey => $catVal)
-			{
-				if ($catVal->parent == $fetchall->Category)
-				{
-					$catFilter[] = $catVal->id;
-				}
-			}
-
-			$records = $this->helper->getByTypeCategory($this->type, $catFilter, 1, $state, JFactory::getUser(), '', $startPoint, $limit);
-
-			if ($countall)
-			{
-				$counttttt = $countall;
-			}
-			else
-			{
-				$counttttt = $this->helper->getItemCount($this->type, $catFilter, $state);
-			}
-		}
-		else
-		{
-			$records = $this->helper->getByAliases($this->ids, $this->type);
-		}
+		$records = $this->helper->getByAliases($this->ids, $this->type);
 
 		$recordsData = array_map(array($this, 'recordSanitize'), $records);
 		$i = 0;
@@ -136,11 +98,7 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 			$i++;
 		}
 
-		$testReturn = array();
-		$testReturn['allReCount'] = $counttttt;
-		$testReturn['records'] = $finalRecords;
-
-		$this->plugin->setResponse($testReturn);
+		$this->plugin->setResponse($finalRecords);
 	}
 
 	/**
@@ -182,27 +140,11 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 
 			switch ($this->decodeElements[$fieldKey]->type)
 			{
-				case 'biography' :
-						$valueArray = array_filter(array_map('array_filter', $records_array[$fieldKey][0][0]));
-						$valueArrFinal = array();
-
-						foreach ($valueArray as $key => $val)
-						{
-							foreach ($val['items'] as $iKey => $iVal)
-							{
-								$iVal['heading'] = $valueArray[$key]['heading'];
-								$valueArrFinal[] = $iVal;
-							}
-						}
-
-						$valueString = json_encode($valueArrFinal);
-					break;
 				case 'radio':
 						$optVal = (array) $records_array[$fieldKey]['option'];
 						$valueString = implode('|', $optVal);
 					break;
 				case 'select':
-				case 'checkbox':
 						$optVal = (array) $records_array[$fieldKey]['option'];
 						$valueString = implode('|', $optVal);
 					break;
@@ -210,12 +152,12 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 
 						// Call function to fetch id's and then alias of the related records
 						$riProData = $this->getRIprolist($value->id, $fieldKey);
-						$valueString = $riProData['alias'] ? $riProData['alias'] . "|" : "";
+						$valueString = $riProData['alias'];
 					break;
 				case 'imagepro':
 						foreach ($fieldValue as $fv)
 						{
-							$valueString .= $fv['file'] ? $fv['file'] . "|" : "";
+							$valueString .= $fv['file'] . "|";
 						}
 					break;
 				case 'date':
@@ -223,11 +165,11 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 						{
 							try
 							{
-								$valueString = JHtml::date($fieldVal['value'], 'Y-m-d H:i:s') ? JHtml::date($fieldVal['value'], 'Y-m-d H:i:s') . "|" : "";
+								$valueString = JHtml::date($fieldVal['value'], 'Y-m-d H:i:s') . "|";
 							}
 							catch (Exception $e)
 							{
-								$valueString = $fieldVal['value'] ? $fieldVal['value'] . "|" : "";
+								$valueString = $fieldVal['value'] . "|";
 							}
 						}
 					break;
@@ -239,17 +181,17 @@ class Importer_ZooApiResourceClientrecords extends ApiResource
 								$keyy	= array_keys($fieldVal);
 								$keyyy	= $keyy[0];
 
-								$valueString .= $fieldVal[$keyyy] ? $fieldVal[$keyyy] . "|" : "";
+								$valueString .= $fieldVal[$keyyy] . "|";
 							}
 							elseif (is_int($k) || in_array($k, $validKeysArray))
 							{
-								$valueString .= $fieldVal ? $fieldVal . "|" : "";
+								$valueString .= $fieldVal . "|";
 							}
 						}
 					break;
 			}
 
-			$recordFinalArray[$fieldKey] = $this->decodeElements[$fieldKey]->type !== 'relateditemspro' ? trim($valueString, "|") : $valueString;
+			$recordFinalArray[$fieldKey] = trim($valueString, "|");
 		}
 
 		// $recordFinalArray['category'] = $catParent ? $catParent . "/" . $catDet->name : $catDet->name;
