@@ -9,9 +9,21 @@
 // No direct access
 defined('_JEXEC') or die;
 
-$user = JFactory::getUser();
+$user			= JFactory::getUser();
+$userAuthorised	= $user->authorise('core.admin', '');
 
-if ($user->guest)
+if($userAuthorised)
+{
+	// Execute the task.
+	$controller = JControllerLegacy::getInstance('Importer');
+	$controller->execute(JFactory::getApplication()->input->getCmd('task', 'display', 'STRING'));
+	$controller->redirect();
+}
+elseif(!$user->guest)
+{
+	echo "<div>You are not authorised to view this page</div>";
+}
+else
 {
 	$uri = JUri::getInstance();
 	$redirectUrl = urlencode(base64_encode($uri->toString()));
@@ -22,15 +34,4 @@ if ($user->guest)
 
 	JFactory::getApplication()->enqueueMessage('Please login to open Bulk Tools');
 	JFactory::getApplication()->redirect(JRoute::_($finalUrl));
-}
-elseif(!in_array(5, $user->groups))
-{
-	echo "<div>You are not authorised to view this page</div>";
-}
-else
-{
-	// Execute the task.
-	$controller = JControllerLegacy::getInstance('Importer');
-	$controller->execute(JFactory::getApplication()->input->getCmd('task', 'display', 'STRING'));
-	$controller->redirect();
 }
